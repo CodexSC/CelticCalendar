@@ -1,0 +1,30 @@
+# Compiled binaries
+celtic_calendar
+celtic_chronometre
+celtic_chronometr
+debug_cal
+debug_doy
+debug_doy2
+fix_epoch
+test_*
+!test_*.c
+testPrintPi
+
+# Test and debug files
+test_*.c
+debug_*.c
+fix_epoch.c
+data.c
+data.h
+
+# Beta version
+beta Version/
+
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+
+# Output files
+output.txt

@@ -1,0 +1,960 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{wasysym}  % For planetary symbols
+
+\geometry{margin=2.5cm}
+\hypersetup{colorlinks=true,linkcolor=blue!60!black,urlcolor=blue!60!black}
+
+\definecolor{celticgreen}{RGB}{0,100,60}
+\definecolor{moonsilver}{RGB}{192,192,210}
+\definecolor{fireOrange}{RGB}{255,140,0}
+
+\titleformat{\section}{\Large\bfseries\color{celticgreen}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{celticgreen!80!black}}{\thesubsection}{1em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textit{The Coligny Calendar}}
+\fancyhead[R]{\textit{Mathematical \& Historical Analysis}}
+\fancyfoot[C]{\thepage}
+
+\title{%
+    \vspace{-1cm}
+    {\Huge\bfseries\color{celticgreen} The Coligny Calendar}\\[0.5cm]
+    {\Large A Mathematical Reconstruction of Celtic Timekeeping}\\[0.3cm]
+    {\large Astronomical Calculations, Historical Context, and\\the Triumph of Observational Science}\\[0.5cm]
+    {\normalsize\color{celticgreen!70!black} Aligned with the Kali Yuga Epoch (3102 BCE)}
+}
+\author{Generated from Celtic Calendar Implementation v2.0}
+\date{December 2025}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+This report presents a comprehensive analysis of the Celtic lunisolar calendar as reconstructed from the Coligny bronze tablet (discovered 1897, dated to the 2nd century CE). We examine the mathematical foundations underlying its astronomical calculations, including lunar phase determination, solar longitude computation, the Metonic cycle, the complete Eight-Fold Year (Wheel of the Year), Pleiades heliacal rising, and sunset-based day reckoning. The implementation aligns the Celtic epoch with the Vedic Kali Yuga (3102 BCE), creating a unified ancient timekeeping framework. The document explores how ancient astronomers achieved remarkable precision through systematic naked-eye observation over generations—a feat that modern computational methods can now replicate and verify.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Introduction: The Coligny Calendar Discovery}
+%═══════════════════════════════════════════════════════════════════════════════
+
+In November 1897, fragments of a large bronze tablet were unearthed near Coligny, in the Ain département of eastern France. When reassembled, the 73 fragments revealed a remarkable artifact: a complete five-year lunisolar calendar inscribed in Gaulish language using Latin script, dating to the late 2nd century CE.
+
+The Coligny Calendar represents the most extensive surviving document in any Celtic language and provides our most detailed evidence of Celtic astronomical and calendrical knowledge. Measuring approximately 1.48 meters wide and 0.9 meters tall, the tablet contains:
+
+\begin{itemize}[leftmargin=2cm]
+    \item 16 vertical columns representing months
+    \item A complete 5-year (62-month) cycle
+    \item Daily notations with astronomical and religious significance
+    \item Intercalary months to synchronize lunar and solar cycles
+\end{itemize}
+
+\begin{tcolorbox}[colback=moonsilver!20,colframe=celticgreen,title=\textbf{Key Inscription Terms}]
+\begin{tabular}{ll}
+\textbf{MAT} (Matis) & ``Lucky'' or ``complete'' — 30-day months \\
+\textbf{ANM} (Anmatu) & ``Unlucky'' or ``incomplete'' — 29-day months \\
+\textbf{ATENOUX} & ``Returning night'' — marks the new moon \\
+\textbf{PRINNI} & ``Principal'' — marks the full moon \\
+\textbf{IVOS} & Festival day \\
+\textbf{DIVERTOMU} & Day marking/turning point \\
+\textbf{M D} & Matis Divertomu — auspicious day \\
+\textbf{D AMB} & Divertomu Ambrix — inauspicious day \\
+\end{tabular}
+\end{tcolorbox}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Epoch Alignment: Celtic Calendar and Kali Yuga}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{The Kali Yuga Epoch}
+
+According to Vedic astronomical tradition, the \textbf{Kali Yuga} began on February 17/18, 3102 BCE (Julian Day 588,465.5). This date, corresponding to a significant planetary conjunction and traditionally marking the death of Krishna, serves as a foundational epoch in Hindu chronology.
+
+\subsection{Alignment with Celtic Year 1}
+
+Our implementation aligns the Celtic calendar with this ancient epoch:
+
+\begin{tcolorbox}[colback=fireOrange!10,colframe=celticgreen,title=\textbf{Epoch Alignment}]
+\begin{center}
+\begin{tabular}{lcl}
+\textbf{Celtic Year 1} & = & \textbf{Kali Yuga Year 1} (3102 BCE) \\
+\textbf{Celtic Year 5127} & = & \textbf{2025 CE} \\
+\end{tabular}
+\end{center}
+\vspace{0.3cm}
+The Celtic year begins at Samhain (November), while Kali Yuga began in February.\\
+This creates an approximately 8-month offset within each year, but the year numbering is synchronized.
+\end{tcolorbox}
+
+This alignment suggests a possible shared astronomical tradition across ancient Indo-European cultures, both rooted in careful celestial observation.
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{The Julian Day System: Foundation of Astronomical Calculation}
+%═══════════════════════════════════════════════════════════════════════════════
+
+All astronomical calculations use the \textbf{Julian Day Number} (JD), a continuous count of days since January 1, 4713 BCE.
+
+\subsection{Converting Gregorian Dates to Julian Day}
+
+The algorithm for converting a Gregorian date $(Y, M, D)$ to Julian Day is:
+
+\begin{equation}
+\text{JD} = \lfloor 365.25(Y + 4716) \rfloor + \lfloor 30.6001(M + 1) \rfloor + D + B - 1524.5
+\end{equation}
+
+Where:
+\begin{itemize}
+    \item If $M \leq 2$: adjust $Y \leftarrow Y - 1$ and $M \leftarrow M + 12$
+    \item $A = \lfloor Y / 100 \rfloor$
+    \item $B = 2 - A + \lfloor A / 4 \rfloor$ (Gregorian correction)
+\end{itemize}
+
+\subsection{The J2000.0 Epoch}
+
+Modern astronomical calculations reference the \textbf{J2000.0 epoch}:
+\begin{equation}
+\text{J2000.0} = \text{JD } 2451545.0 = \text{January 1, 2000, 12:00 TT}
+\end{equation}
+
+Time is expressed as ``days since J2000.0'':
+\begin{equation}
+d = \text{JD} - 2451545.0
+\end{equation}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Solar Position: Ecliptic Longitude Calculation}
+%═══════════════════════════════════════════════════════════════════════════════
+
+The Sun's position along the ecliptic determines the seasons, solstices, equinoxes, and cross-quarter days.
+
+\subsection{Mean Longitude and Mean Anomaly}
+
+The Sun's \textbf{mean longitude} $L$:
+\begin{equation}
+L = 280.460° + 0.9856474° \times d \pmod{360°}
+\end{equation}
+
+The \textbf{mean anomaly} $g$:
+\begin{equation}
+g = 357.528° + 0.9856003° \times d \pmod{360°}
+\end{equation}
+
+The coefficient derives from: $\frac{360°}{365.25 \text{ days}} \approx 0.9856°/\text{day}$
+
+\subsection{Equation of Center}
+
+Earth's elliptical orbit causes apparent speed variations:
+\begin{equation}
+C = 1.915° \sin(g) + 0.020° \sin(2g)
+\end{equation}
+
+\subsection{True Ecliptic Longitude}
+
+\begin{equation}
+\lambda = L + C = L + 1.915° \sin(g) + 0.020° \sin(2g)
+\end{equation}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{The Eight-Fold Year: Wheel of the Year}
+%═══════════════════════════════════════════════════════════════════════════════
+
+The Celtic year is divided into eight major festivals—four \textbf{Quarter Days} (solstices and equinoxes) and four \textbf{Cross-Quarter Days} (fire festivals).
+
+\subsection{Quarter Days: Solstices and Equinoxes}
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Festival} & \textbf{Solar Longitude} & \textbf{Astronomical Event} & \textbf{Approx. Date} \\
+\midrule
+\textbf{Yule} & 270° & Winter Solstice & December 21 \\
+\textbf{Ostara} & 0° & Vernal Equinox & March 20 \\
+\textbf{Litha} & 90° & Summer Solstice & June 21 \\
+\textbf{Mabon} & 180° & Autumn Equinox & September 22 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Cross-Quarter Days: Fire Festivals}
+
+The cross-quarters occur at the \textit{exact midpoints} between solstices and equinoxes:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Festival} & \textbf{Solar Long.} & \textbf{Calculation} & \textbf{Calendar Date} & \textbf{True Astro. Date} \\
+\midrule
+\textbf{Samhain} & 225° & $(180° + 270°)/2$ & November 1 & November 6-7 \\
+\textbf{Imbolc} & 315° & $(270° + 360°)/2$ & February 1 & February 3-4 \\
+\textbf{Beltane} & 45° & $(0° + 90°)/2$ & May 1 & May 5-6 \\
+\textbf{Lughnasadh} & 135° & $(90° + 180°)/2$ & August 1 & August 6-7 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Calculation of Days to Festival}
+
+Given current solar longitude $\lambda_{\text{now}}$ and target longitude $\lambda_{\text{target}}$:
+
+\begin{equation}
+\Delta\lambda = \lambda_{\text{target}} - \lambda_{\text{now}}
+\end{equation}
+
+\begin{equation}
+\text{Days to festival} \approx \frac{\Delta\lambda}{0.9856°/\text{day}}
+\end{equation}
+
+\begin{tcolorbox}[colback=moonsilver!15,colframe=celticgreen,title=\textbf{Example: Finding Samhain 2025}]
+On November 1, 2025: $\lambda = 219.3°$\\
+Target (Samhain): $\lambda = 225°$\\
+$\Delta\lambda = 225° - 219.3° = 5.7°$\\
+Days until Samhain $= 5.7° / 0.9856 \approx 5.8$ days\\
+\textbf{True Samhain 2025: November 7} (Sun at 225.3°)
+\end{tcolorbox}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Lunar Calculations}
+%═══════════════════════════════════════════════════════════════════════════════
+
+The Celtic calendar is fundamentally \textbf{lunar}, with months beginning at the full moon.
+
+\subsection{The Synodic Month}
+
+\begin{equation}
+P_{\text{synodic}} = 29.53058867 \text{ days}
+\end{equation}
+
+\subsection{Lunar Phase Calculation}
+
+Given a reference new moon at JD 2451550.1 (January 6, 2000):
+
+\begin{equation}
+\phi = \frac{\text{JD} - 2451550.1}{29.53058867} \pmod{1}
+\end{equation}
+
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+\textbf{Phase Value} & \textbf{Lunar Phase} \\
+\midrule
+$\phi = 0.00$ & New Moon (ATENOUX) \\
+$\phi = 0.25$ & First Quarter (waxing) \\
+$\phi = 0.50$ & Full Moon (PRINNI) \\
+$\phi = 0.75$ & Last Quarter (waning) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Celtic Month Structure: The Coicíse}
+
+Each month consists of two \textbf{coicíse} (fortnights):
+
+\begin{tcolorbox}[colback=moonsilver!15,colframe=celticgreen]
+\textbf{First Coicíse (Days I-XV):} Full Moon $\rightarrow$ New Moon\\
+The ``bright half'' wanes from PRINNI to ATENOUX.\\[0.3cm]
+\textbf{Second Coicíse (Days XVI-XXIX/XXX):} New Moon $\rightarrow$ Full Moon\\
+The ``dark half'' waxes from ATENOUX toward the next PRINNI.
+\end{tcolorbox}
+
+The term \textbf{ATENOUX} (``returning night'') marks the darkest night when the moon ``returns'' to begin its waxing phase.
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Celtic Day Reckoning: Sunset to Sunset}
+%═══════════════════════════════════════════════════════════════════════════════
+
+Julius Caesar recorded in \textit{De Bello Gallico} (VI.18):
+
+\begin{quote}
+\textit{``Spatia omnis temporis non numero dierum sed noctium finiunt; dies natales et mensum et annorum initia sic observant ut noctem dies subsequatur.''}
+
+``They define all periods of time not by the number of days but of nights; they observe birthdays and the beginnings of months and years in such a way that the night precedes the day.''
+\end{quote}
+
+\subsection{Sunset Calculation}
+
+The hour angle $H$ at sunset:
+\begin{equation}
+\cos(H) = -\tan(\phi) \tan(\delta)
+\end{equation}
+
+Where $\phi$ = latitude, $\delta$ = solar declination.
+
+Solar declination:
+\begin{equation}
+\delta = 23.44° \times \sin(\lambda)
+\end{equation}
+
+Sunset time (hours after solar noon):
+\begin{equation}
+t_{\text{sunset}} = \frac{H}{15°/\text{hour}}
+\end{equation}
+
+\subsection{Implementation for Coligny (46.38°N)}
+
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+\textbf{Date} & \textbf{Sunset (Local Solar Time)} \\
+\midrule
+Winter Solstice (Dec 21) & 16:17 \\
+Vernal Equinox (Mar 20) & 18:00 \\
+Summer Solstice (Jun 21) & 19:54 \\
+Autumnal Equinox (Sep 22) & 18:00 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{The Metonic Cycle: 19-Year Synchronization}
+%═══════════════════════════════════════════════════════════════════════════════
+
+The \textbf{Metonic cycle} represents a fundamental period in lunisolar calendrics.
+
+\subsection{The Mathematical Relationship}
+
+\begin{equation}
+235 \text{ synodic months} \approx 19 \text{ tropical years}
+\end{equation}
+
+Precisely:
+\begin{align}
+235 \times 29.53058867 &= 6939.688 \text{ days} \\
+19 \times 365.24219 &= 6939.602 \text{ days}
+\end{align}
+
+The difference:
+\begin{equation}
+\Delta = 6939.688 - 6939.602 = 0.086 \text{ days} \approx 2.07 \text{ hours per cycle}
+\end{equation}
+
+\subsection{Accumulated Drift}
+
+\begin{center}
+\begin{tabular}{cc}
+\toprule
+\textbf{Time Period} & \textbf{Accumulated Drift} \\
+\midrule
+1 Metonic cycle (19 years) & 2.07 hours \\
+5 cycles (95 years) & 10.3 hours \\
+10 cycles (190 years) & 20.7 hours \\
+100 cycles (1900 years) & 8.6 days \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{The Five-Year Coligny Cycle}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Structure of the Cycle}
+
+\begin{center}
+\begin{tabular}{cccc}
+\toprule
+\textbf{Year} & \textbf{Regular Months} & \textbf{Intercalary} & \textbf{Total Days} \\
+\midrule
+1 & 12 (354 days) & +30 (Quimonios) & 384 \\
+2 & 12 (354 days) & — & 354 \\
+3 & 12 (354 days) & +30 (Quimonios) & 384 \\
+4 & 12 (354 days) & — & 354 \\
+5 & 12 (354 days) & — & 354 \\
+\midrule
+\textbf{Total} & 60 months & +2 months & \textbf{1830 days} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The Twelve Celtic Months}
+
+\begin{center}
+\begin{tabular}{clccc}
+\toprule
+\textbf{\#} & \textbf{Name} & \textbf{Abbr.} & \textbf{Days} & \textbf{Type} \\
+\midrule
+1 & Samonios & SAM & 30 & MAT \\
+2 & Dumannios & DUM & 29 & ANM \\
+3 & Riuros & RIV & 30 & MAT \\
+4 & Anagantios & ANA & 29 & ANM \\
+5 & Ogronios & OGR & 30 & MAT \\
+6 & Cutios & CVT & 30 & MAT \\
+7 & Giamonios & GIA & 29 & ANM \\
+8 & Simivisonnos & SIM & 30 & MAT \\
+9 & Equos & EQV & 29 & ANM \\
+10 & Elembivios & ELE & 29 & ANM \\
+11 & Edrinios & EDR & 30 & MAT \\
+12 & Cantlos & CAN & 29 & ANM \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{The Pleiades: Stellar Marker of Samhain}
+%═══════════════════════════════════════════════════════════════════════════════
+
+The \textbf{Pleiades} (Seven Sisters, M45) served as a crucial celestial marker.
+
+\subsection{Coordinates}
+
+\begin{align}
+\text{Right Ascension} &= 3^h 47^m \approx 56.75° \\
+\text{Declination} &= +24.1°
+\end{align}
+
+\subsection{Samhain Connection}
+
+At Samhain (early November):
+\begin{itemize}
+    \item The Pleiades reach their highest point at midnight
+    \item They rise at sunset and set at sunrise—visible all night
+    \item This \textbf{acronychal rising} marked the beginning of the dark half of the year
+\end{itemize}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Coligny Tablet Notations}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Day Quality Markers}
+
+\begin{center}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Notation} & \textbf{Interpretation} \\
+\midrule
+\textbf{M D} & \textit{Matis Divertomu} — Auspicious/favorable day \\
+\textbf{D} & \textit{Divertomu} — Neutral turning point \\
+\textbf{D AMB} & \textit{Divertomu Ambrix Ri} — Inauspicious day \\
+\textbf{N INIS R} & Night notation for dark moon (days 22-24) \\
+\textbf{PRINNI LOUD} & Full moon marker in MAT months \\
+\textbf{PRINNI LAG} & Full moon marker in ANM months \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The Triple Marks}
+
+Each day bears one of three enigmatic triple marks:
+
+\begin{center}
+\large
+\textbf{I\hspace{0.1em}i\hspace{0.1em}i} \qquad \textbf{i\hspace{0.1em}I\hspace{0.1em}i} \qquad \textbf{i\hspace{0.1em}i\hspace{0.1em}I}
+\normalsize
+\end{center}
+
+\noindent (On the tablet, these appear as three vertical strokes with one stroke ``emphasized'' or marked differently—possibly crossed, larger, or darker. We represent the emphasized stroke as \textbf{I} and normal strokes as \textbf{i}.)
+
+\textbf{Interpretation:} These likely represent \textbf{three divisions of daylight}:
+
+\begin{center}
+\begin{tabular}{ccl}
+\toprule
+\textbf{Mark} & \textbf{Position} & \textbf{Meaning} \\
+\midrule
+\textbf{I\hspace{0.05em}i\hspace{0.05em}i} & First emphasized & Morning (sunrise to midday) \\
+\textbf{i\hspace{0.05em}I\hspace{0.05em}i} & Middle emphasized & Midday (noon period) \\
+\textbf{i\hspace{0.05em}i\hspace{0.05em}I} & Last emphasized & Afternoon (midday to sunset) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Possible purposes:
+\begin{itemize}
+    \item Ritual timing — when to perform ceremonies
+    \item Observation periods — for astronomical watching
+    \item Work divisions — practical scheduling
+\end{itemize}
+
+\subsection{DIVERTOMU: The Virtual Day}
+
+In 29-day (ANM) months, a ``virtual 30th day'' called \textbf{DIVERTOMU} maintained structural parallel with 30-day months, possibly for ritual or accounting purposes.
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Festival and Day Quality: The Dual Nature of Sacred Time}
+%═══════════════════════════════════════════════════════════════════════════════
+
+One of the most profound aspects of the Coligny calendar is its treatment of \textbf{festivals (IVOS)} in relation to \textbf{day quality (M D / D / D AMB)}. Modern interpreters often assume that festival days are uniformly ``good'' or ``lucky.'' A more sophisticated understanding may be warranted.
+
+\subsection{The Coexistence of Sacred and Quality Markers}
+
+The Coligny tablet contains both IVOS (festival) notations and day quality markers (M D / D / D AMB). While both systems operate within the same calendar structure, \textbf{the precise relationship between them—whether they were intended to be read together for the same day—remains a matter of scholarly interpretation}.
+
+The fragmentary nature of the tablet (73 pieces reassembled) makes definitive conclusions difficult. However, the \textit{principle} that a sacred day could carry quality attributes is consistent with what we know of Celtic thought, and our implementation explores this possibility:
+
+\begin{tcolorbox}[colback=moonsilver!15,colframe=celticgreen,title=\textbf{Festival + Quality Combinations (Interpretive Model)}]
+\begin{center}
+\begin{tabular}{lcp{7cm}}
+\toprule
+\textbf{Notation} & \textbf{Symbol} & \textbf{Interpretation} \\
+\midrule
+IVOS + M D & $\star$ & Auspicious festival — ideal for celebration, initiations, blessings \\
+IVOS + D & $\circ$ & Neutral festival — observe with awareness, neither particularly favored nor challenged \\
+IVOS + D AMB & $\triangle$ & Challenging festival — sacred but demanding; may require sacrifice, purification, or caution \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{tcolorbox}
+
+\textit{Note: This combined notation is our implementation's interpretation, not a directly attested tablet reading.}
+
+\subsection{Theological Implications}
+
+If this dual-marking interpretation is correct, it would reveal a Celtic worldview fundamentally different from later Christian or modern secular thinking:
+
+\begin{enumerate}
+    \item \textbf{Sacred $\neq$ Safe}: A day can be holy and simultaneously dangerous or demanding. The gods do not always send easy blessings.
+
+    \item \textbf{Liminal Thresholds}: Major transitions (solstices, equinoxes, cross-quarters) occur at cosmic ``hinges'' where normal rules are suspended. Such times carry power, but power cuts both ways.
+
+    \item \textbf{Ritual Specificity}: The quality marker may have dictated \textit{how} to observe a festival:
+    \begin{itemize}
+        \item M D festival: Feasting, public celebration, oaths
+        \item D festival: Quiet observation, reflection
+        \item D AMB festival: Sacrifice, appeasement, protective rituals
+    \end{itemize}
+
+    \item \textbf{Cosmic Realism}: The druids did not prettify the universe. They mapped its actual rhythms, including the difficult ones.
+\end{enumerate}
+
+\subsection{Example: Yule 2025}
+
+In December 2025, the Winter Solstice (Yule) falls on Day 18 of Dumannios—which happens to be a \textbf{D AMB} day (odd day after ATENOUX). Our calendar displays this as:
+
+\begin{verbatim}
+    18 (New Moon) [Warning Symbol] — Festival + Inauspicious
+\end{verbatim}
+
+This is not a contradiction but a \textit{revelation}: the darkest turning point of the year, when the sun ``dies'' and is reborn, carries inherently challenging energy. The ancient Celts would have approached this Yule with:
+
+\begin{itemize}
+    \item Heightened ritual care
+    \item Possible animal sacrifice or offerings
+    \item Protective wards and purifications
+    \item Recognition that transformation requires passing through difficulty
+\end{itemize}
+
+\subsection{Implications for Modern Practice}
+
+Those who work with the Celtic calendar today can use this information practically:
+
+\begin{tcolorbox}[colback=fireOrange!10,colframe=celticgreen]
+\textbf{When a festival falls on D AMB:}
+\begin{itemize}
+    \item Approach with reverence, not casual celebration
+    \item Build in time for reflection and grounding
+    \item Consider what must be ``sacrificed'' or released
+    \item Expect intensity; do not be surprised by difficulty
+    \item Trust that the challenge is part of the sacred process
+\end{itemize}
+\end{tcolorbox}
+
+This nuanced understanding—that sacred time is \textit{powerful} rather than merely \textit{pleasant}—may be one of the most valuable insights the Coligny calendar offers to modern spiritual practice.
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Beyond Superstition: The Empirical Basis of Day Quality}
+%═══════════════════════════════════════════════════════════════════════════════
+
+A skeptical modern reader might dismiss the M D / D / D AMB system as mere superstition. However, several lines of evidence suggest the Coligny day-quality markers represent \textbf{systematic empirical observation} rather than arbitrary belief.
+
+\subsection{Mathematical Precision as Evidence}
+
+The calendar encodes astronomical knowledge requiring centuries of careful observation:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Parameter} & \textbf{Coligny Value} & \textbf{Modern Value} \\
+\midrule
+Synodic month & $\approx 29.5$ days & 29.53059 days \\
+5-year cycle & 1830 days (62 lunations) & 1830.89 days \\
+Solar year & implicit 365.25 days & 365.24219 days \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textit{Superstition does not require mathematics. This is astronomy.}
+
+\subsection{The D AMB Pattern: Not Random}
+
+The distribution of D AMB (inauspicious) days follows a precise, non-arbitrary pattern:
+
+\begin{tcolorbox}[colback=moonsilver!15,colframe=celticgreen,title=\textbf{D AMB Distribution}]
+\textbf{First Coicíse (Days 1-15):} Only days 5 and 11\\
+\textbf{Second Coicíse (Days 16-30):} Odd days only (17, 19, 21, 23, 25, 27, 29), except day 16 (1a)
+\end{tcolorbox}
+
+This pattern correlates with \textbf{lunar phase transitions}. The days marked D AMB cluster around:
+\begin{itemize}
+    \item First quarter approach (days 5, 11 in waning phase)
+    \item The entire waxing phase after new moon (odd days = asymmetric energy buildup)
+\end{itemize}
+
+\subsection{Cross-Cultural Convergence}
+
+Remarkably similar day-quality systems appear in cultures with no known contact:
+
+\begin{center}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Culture} & \textbf{System} \\
+\midrule
+\textbf{Vedic (India)} & Panchanga with Tithi quality ratings; specific lunar days (tithis) marked favorable or unfavorable \\
+\textbf{Chinese} & Traditional almanac (Tung Shu) with daily quality assessments based on lunar-solar combinations \\
+\textbf{Babylonian} & Hemerologies listing favorable/unfavorable days for specific activities \\
+\textbf{Roman} & Dies fasti, nefasti, comitiales — legally/religiously permitted days \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Independent cultures reaching similar conclusions suggests observation of the same underlying phenomena.}
+
+\subsection{Modern Scientific Correlates}
+
+Contemporary research has identified measurable lunar effects:
+
+\begin{enumerate}
+    \item \textbf{Human Biology}:
+    \begin{itemize}
+        \item Menstrual cycle averaging 29.5 days (synodic month)
+        \item Sleep quality disruption around full moon (Cajochen et al., 2013)
+        \item Melatonin level variations with lunar phase
+    \end{itemize}
+
+    \item \textbf{Behavioral Patterns}:
+    \begin{itemize}
+        \item Hospital admission rates show weak but detectable lunar correlations
+        \item Agricultural outcomes differ by planting phase (biodynamic studies)
+        \item Animal behavior changes around full/new moon documented
+    \end{itemize}
+
+    \item \textbf{Geophysical Effects}:
+    \begin{itemize}
+        \item Tidal forces affect groundwater, sap flow in plants
+        \item Earth's crust experiences measurable deformation
+        \item Atmospheric tides influence weather patterns
+    \end{itemize}
+\end{enumerate}
+
+\subsection{The Druidic Method: Proto-Scientific Data Collection}
+
+Caesar tells us Druidic training lasted \textbf{twenty years}, during which initiates memorized vast bodies of knowledge. This represents an institutional framework for:
+
+\begin{itemize}
+    \item \textbf{Long-term observation}: Tracking outcomes over decades
+    \item \textbf{Pattern recognition}: Correlating events with celestial positions
+    \item \textbf{Empirical refinement}: Adjusting predictions based on results
+    \item \textbf{Knowledge transmission}: Preserving findings across generations
+\end{itemize}
+
+The druids were, in effect, \textbf{data scientists without computers}—using human memory as their database and oral tradition as their peer review.
+
+\subsection{Falsifiability: A Scientific Criterion}
+
+Unlike pure superstition, the Coligny system makes \textbf{testable predictions}:
+
+\begin{tcolorbox}[colback=celticgreen!10,colframe=celticgreen,title=\textbf{Testable Hypotheses}]
+\begin{enumerate}
+    \item D AMB days should correlate with higher rates of:
+    \begin{itemize}
+        \item Accidents and injuries
+        \item Failed negotiations or contracts
+        \item Agricultural setbacks (if planted on these days)
+    \end{itemize}
+
+    \item M D days should show better outcomes for:
+    \begin{itemize}
+        \item Initiations, weddings, oaths
+        \item Business ventures begun on these days
+        \item Plantings and harvests
+    \end{itemize}
+\end{enumerate}
+\end{tcolorbox}
+
+Such hypotheses could be tested empirically with historical data—a project beyond the scope of this calendar implementation but potentially valuable for chronobiology research.
+
+\subsection{Conclusion: Observation, Not Superstition}
+
+The Coligny calendar's day-quality system exhibits characteristics of genuine empirical knowledge:
+
+\begin{enumerate}
+    \item \textbf{Mathematical structure}: Non-random, rule-based patterns
+    \item \textbf{Cross-cultural validation}: Independent discovery by multiple civilizations
+    \item \textbf{Modern correlates}: Measurable lunar effects on biology and behavior
+    \item \textbf{Institutional rigor}: 20-year training programs for knowledge preservation
+    \item \textbf{Falsifiability}: Predictions that could, in principle, be tested
+\end{enumerate}
+
+Whether the underlying mechanism is gravitational, electromagnetic, or psychological, the \textit{pattern recognition} encoded in the Coligny tablet represents centuries of careful observation—not wishful thinking.
+
+\begin{tcolorbox}[colback=moonsilver!30,colframe=celticgreen!80!black]
+\centering
+\textit{``The druids were not guessing. They were observing.''}\\[0.3cm]
+The M D and D AMB markers may encode real correlations between lunar phase and human experience—correlations that modern science is only beginning to rediscover.
+\end{tcolorbox}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Historiographical Context}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Classical Sources on Celtic Astronomy}
+
+\textbf{Julius Caesar} (\textit{De Bello Gallico}, VI.14):
+\begin{quote}
+\textit{``[The Druids] likewise discuss and impart to the youth many things concerning the stars and their motions, the magnitude of the world and the earth, the nature of things...''}
+\end{quote}
+
+\textbf{Pomponius Mela} (III.2.18-19) notes that Druidic training lasted up to twenty years, memorizing vast astronomical knowledge.
+
+\subsection{The Oral Tradition Problem}
+
+The Druids deliberately avoided writing (Caesar, VI.14). This means:
+\begin{enumerate}
+    \item Most Celtic astronomical knowledge is lost
+    \item The Coligny tablet (in Gallo-Roman context) is exceptional
+    \item We must reconstruct practices from fragments
+\end{enumerate}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Lunar-Synced Month Display}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{True Lunar Synchronization}
+
+Our implementation synchronizes Celtic months with \textbf{actual lunar phases}:
+
+\begin{tcolorbox}[colback=moonsilver!15,colframe=celticgreen,title=\textbf{Month-Moon Alignment}]
+\begin{center}
+\begin{tabular}{lcl}
+\textbf{Day 1} & = & Full Moon (PRINNI) — Month begins \\
+\textbf{Day 15} & $\approx$ & New Moon (ATENOUX) — ``Returning Night'' \\
+\textbf{Day 29/30} & $\approx$ & Full Moon — Next month begins \\
+\end{tabular}
+\end{center}
+\end{tcolorbox}
+
+\subsection{Finding Samonios: The Anchor Month}
+
+Samonios (the first month) begins at the \textbf{Full Moon nearest Samhain}:
+
+\begin{equation}
+\text{Samonios Start} = \text{Full Moon closest to } \lambda_{\odot} = 225°
+\end{equation}
+
+For 2025:
+\begin{itemize}
+    \item Samhain (Sun at 225°): November 7, 2025
+    \item Nearest Full Moon: November 5, 2025
+    \item Therefore: \textbf{Samonios Day 1 = November 5, 2025}
+\end{itemize}
+
+\subsection{Month Index Calculation}
+
+Given the Julian Day of Samonios start ($\text{JD}_{\text{Samonios}}$):
+
+\begin{equation}
+\text{Month Index} = \left\lfloor \frac{\text{JD}_{\text{today}} - \text{JD}_{\text{Samonios}}}{P_{\text{synodic}}} \right\rfloor
+\end{equation}
+
+Where $P_{\text{synodic}} = 29.53058867$ days.
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{The Weekday Paradox: Celtic vs. Gregorian Time}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{The Problem}
+
+Since the Celtic day begins at \textbf{sunset} while the Gregorian day begins at \textbf{midnight}, a paradox arises each evening:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Situation} & \textbf{Gregorian} & \textbf{Celtic} \\
+\midrule
+Thursday 23:00 (after sunset) & Thursday & Friday \\
+Friday 06:00 (before sunset) & Friday & Friday \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The Solution: Transition Notation}
+
+Our display shows the \textbf{Celtic weekday} (since this is a Celtic calendar) with a \textbf{transition indicator} when after sunset:
+
+\begin{tcolorbox}[colback=fireOrange!10,colframe=celticgreen,title=\textbf{Display Format}]
+\begin{verbatim}
+Before Sunset:  Day 14 - Jupiter - Moon Sagittarius - Sun Sagittarius
+After Sunset:   Day 15 - Venus (Thu->Fri) - NewMoon Sagittarius - Sun Sagittarius
+\end{verbatim}
+
+The notation \texttt{(Thu->Fri)} indicates:
+\begin{itemize}
+    \item Gregorian weekday: Jupiter/Thursday
+    \item Celtic weekday: Venus/Friday
+    \item We have crossed sunset into the Celtic ``next day''
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Planetary Weekday Symbols}
+
+The seven-day week, with its planetary associations, was known throughout the ancient world:
+
+\begin{center}
+\begin{tabular}{cccl}
+\toprule
+\textbf{Symbol} & \textbf{Planet} & \textbf{Day} & \textbf{Latin Name} \\
+\midrule
+$\odot$ & Sun & Sunday & \textit{Dies Solis} \\
+$\circ$ & Moon & Monday & \textit{Dies Lunae} \\
+$\maltese$ & Mars & Tuesday & \textit{Dies Martis} \\
+$\star$ & Mercury & Wednesday & \textit{Dies Mercurii} \\
+$\mathbf{4}$ & Jupiter & Thursday & \textit{Dies Iovis} \\
+$\mathbf{9}$ & Venus & Friday & \textit{Dies Veneris} \\
+$\mathbf{h}$ & Saturn & Saturday & \textit{Dies Saturni} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textit{Note: The program displays these as Unicode glyphs: $\odot$ (Sun), $\circ$ (Moon), etc.}
+
+\subsection{Mathematical Implementation}
+
+The weekday is calculated from the Julian Day Number:
+
+\begin{equation}
+\text{Weekday Index} = (\text{JD} + 1) \mod 7
+\end{equation}
+
+Where the index maps to: 0=Sunday, 1=Monday, ..., 6=Saturday.
+
+For Celtic weekday (after sunset):
+\begin{equation}
+\text{Celtic Weekday} = (\text{JD}_{\text{Celtic}} + 1) \mod 7
+\end{equation}
+
+Where $\text{JD}_{\text{Celtic}} = \text{JD} + 1$ if after sunset.
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{Conclusion: The Triumph of Observational Science}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{What the Ancients Achieved Without Instruments}
+
+\begin{tcolorbox}[colback=celticgreen!10,colframe=celticgreen,title=\textbf{Observational Achievements}]
+\begin{enumerate}
+    \item \textbf{Synodic Month}: Measured as $\approx 29.5$ days (actual: 29.53059)
+    \item \textbf{Solar Year}: Understood the $\approx 11$-day lunar-solar discrepancy
+    \item \textbf{Metonic Cycle}: Recognized 235 months $\approx$ 19 years (error: 2 hrs/cycle)
+    \item \textbf{Solstices \& Equinoxes}: Precise determination through shadow/sunrise observation
+    \item \textbf{Cross-Quarters}: Calculated midpoints of the solar year
+    \item \textbf{Stellar Markers}: Used Pleiades for seasonal timing
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{The Methodology}
+
+These achievements required:
+\begin{itemize}
+    \item \textbf{Generations of continuous observation}
+    \item \textbf{Precise record-keeping} (tallies, memorized counts)
+    \item \textbf{Pattern recognition} (monthly, annual, 5-year, 19-year cycles)
+    \item \textbf{Institutional continuity} (Druidic schools lasting 20 years)
+\end{itemize}
+
+\subsection{Computational Verification}
+
+What our implementation demonstrates: \textbf{the mathematical models of modern astronomy, when applied to Celtic calendar rules, produce internally consistent and astronomically accurate results}.
+
+The ancient system \textit{worked}. It successfully:
+\begin{itemize}
+    \item Tracked lunar phases for religious observance
+    \item Maintained solar synchronization over decades
+    \item Predicted solstices, equinoxes, and cross-quarters
+    \item Integrated stellar markers (Pleiades) with the calendar
+\end{itemize}
+
+\subsection{A Bridge Across Millennia}
+
+\begin{tcolorbox}[colback=moonsilver!30,colframe=celticgreen!80!black]
+\centering
+\large\textbf{``The night precedes the day.''}\\[0.3cm]
+\normalsize — Julius Caesar, \textit{De Bello Gallico} VI.18\\[0.5cm]
+\small
+In the Celtic reckoning, darkness comes before light.\\
+In the history of science, observation precedes calculation.\\
+In both cases, knowledge emerges from patience and attention.\\[0.5cm]
+The same celestial mechanics that governed the skies over Iron Age Gaul govern them today. The Celtic astronomers, armed with nothing but their eyes and memories, discovered truths that our computers now confirm.\\[0.3cm]
+\textit{The cosmos is ordered. Its patterns can be known.\\
+Patient observation reveals eternal truths.}
+\end{tcolorbox}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section*{Appendix: Implementation Summary}
+%═══════════════════════════════════════════════════════════════════════════════
+\addcontentsline{toc}{section}{Appendix: Implementation Summary}
+
+\begin{center}
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{File} & \textbf{Purpose} \\
+\midrule
+\texttt{main.c} & Entry point, displays all calendar information \\
+\texttt{calendar.c} & Celtic year/month/day, 5-year cycle, Kali Yuga epoch \\
+\texttt{astronomy.c} & Solar longitude, lunar phase, Metonic cycle, Eight-Fold Year, sunset calculations, Pleiades \\
+\texttt{glyphs.c} & ASCII display, Coligny notations, moon phase grid \\
+\texttt{festivals.c} & Eight festivals with multi-day celebrations \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Compilation:}
+\begin{verbatim}
+gcc -o celtic_calendar main.c calendar.c astronomy.c \
+    glyphs.c festivals.c -lm
+\end{verbatim}
+
+\textbf{Usage:}
+\begin{verbatim}
+./celtic_calendar              # Today's date
+./celtic_calendar 2025 11 7    # Specific date (Samhain 2025)
+./celtic_calendar 1986 10 3    # Any historical date
+\end{verbatim}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section*{References}
+%═══════════════════════════════════════════════════════════════════════════════
+\addcontentsline{toc}{section}{References}
+
+\begin{enumerate}
+    \item Caesar, Julius. \textit{De Bello Gallico}. Book VI.
+    \item Duval, Paul-Marie, and Georges Pinault. \textit{Recueil des inscriptions gauloises, Vol. III: Les Calendriers}. Paris: CNRS, 1986.
+    \item Mac Neill, Eoin. ``On the Notation and Chronology of the Calendar of Coligny.'' \textit{Ériu} 10 (1926): 1-67.
+    \item Meeus, Jean. \textit{Astronomical Algorithms}. 2nd ed. Willmann-Bell, 1998.
+    \item Olmsted, Garrett. \textit{The Gaulish Calendar}. Bonn: Rudolf Habelt, 1992.
+    \item \textit{Surya Siddhanta}. Ancient Indian astronomical text.
+\end{enumerate}
+
+\vfill
+\begin{center}
+\small
+\textit{Generated December 2025}\\
+Celtic Calendar Implementation v2.0\\
+Aligned with Kali Yuga Epoch
+\end{center}
+
+\end{document}
