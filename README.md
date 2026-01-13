@@ -1,102 +1,82 @@
-# Celtic Calendar
-
-> **Image Setup:**
->
-> To display images in this README on GitHub, please download the following files and place them in a new `images/` folder in this directory:
->
-> - [Coligny_calendar.png](https://upload.wikimedia.org/wikipedia/commons/6/6e/Coligny_calendar.png)
-> - [Calendrier_de_Coligny_03.jpg](https://upload.wikimedia.org/wikipedia/commons/2/2a/Calendrier_de_Coligny_03.jpg)
-> - [Coligny_calendar_months.png](https://upload.wikimedia.org/wikipedia/commons/2/2e/Coligny_calendar_months.png)
-> - [Celtic-knot.svg](https://upload.wikimedia.org/wikipedia/commons/2/2b/Celtic-knot.svg)
->
-> After downloading, your folder should look like:
->
-> ```
-> Celtic Calendar/
-> ├── images/
-> │   ├── Coligny_calendar.png
-> │   ├── Calendrier_de_Coligny_03.jpg
-> │   ├── Coligny_calendar_months.png
-> │   └── Celtic-knot.svg
-> ```
->
-> The images will then display correctly on GitHub and in Markdown viewers.
-
-
-<!--
-  To display images reliably on GitHub, download the following images and place them in the `images/` directory:
-  - Coligny_calendar.png: https://upload.wikimedia.org/wikipedia/commons/6/6e/Coligny_calendar.png
-  - Calendrier_de_Coligny_03.jpg: https://upload.wikimedia.org/wikipedia/commons/2/2a/Calendrier_de_Coligny_03.jpg
-  - Coligny_calendar_months.png: https://upload.wikimedia.org/wikipedia/commons/2/2e/Coligny_calendar_months.png
-  - Celtic-knot.svg: https://upload.wikimedia.org/wikipedia/commons/2/2b/Celtic-knot.svg
--->
-
-![Celtic Calendar Banner](images/Coligny_calendar.png)
-
-A C project for calculating, simulating, and exploring the ancient Celtic calendar system, including astronomical and festival computations.
-
----
-
-## The Original Coligny Calendar Artifact
-
-
 <p align="center">
-  <img src="images/Calendrier_de_Coligny_03.jpg" alt="Coligny Calendar Artifact" width="500"/>
+  <img src="images/Celtic-knot.svg" width="120"/>
 </p>
 
-<p align="center"><em>The bronze fragments of the Coligny Calendar, discovered in France (Wikimedia Commons)</em></p>
+# 🕯️ Celtic Calendar 🕯️
+
+<p align="center">
+<b><i>“May the knots of time reveal the wisdom of the ancients.”</i></b>
+</p>
+
+<p align="center">
+<img src="images/Coligny_calendar.png" width="400"/>
+</p>
+
+<p align="center">
+<b>A C project for exploring, simulating, and visualizing the ancient Celtic calendar system, with astronomical precision and festival lore.</b>
+</p>
 
 ---
 
-## Features
+## ✨ Features & Functionality
 
-- **Astronomical Calculations:**
-  - Julian Day, lunar phases, solar positions, and more.
-- **Celtic Calendar Simulation:**
-  - Month and festival calculations based on reconstructed Celtic timekeeping.
-- **Festival Detection:**
-  - Automatic identification of major Celtic festivals (Samhain, Imbolc, Beltane, Lughnasadh).
-- **Debug/Test Utilities:**
-  - Multiple test programs for validating calendar logic and astronomical calculations.
+- **Celtic Calendar Simulation**
+  - Visualizes months, days, and the unique structure of the Coligny calendar.
+  - Highlights the dual coicise (half-months), intercalary months, and authentic day counts.
+- **Astronomical Calculations**
+  - Computes Julian Day, lunar phases, solar positions, and zodiac signs for any date.
+- **Festival Detection**
+  - Automatically marks major Celtic festivals (Samhain, Imbolc, Beltane, Lughnasadh) and astronomical cross-quarters.
+- **TUI (Terminal User Interface)**
+  - Navigate the calendar with arrow keys in a richly decorated, knotwork-inspired interface.
+  - ASCII/Unicode art, color highlights, and Celtic knot motifs throughout.
+- **Coligny Tablet Notation**
+  - Displays reconstructed day notations, auspicious/inauspicious days, and festival markers as on the original bronze tablet.
+- **Search & Navigation**
+  - Jump to any Gregorian date, move forward/backward by lunar months, or return to today.
+- **Test & Debug Utilities**
+  - Standalone programs for validating astronomical and calendar logic.
 
 ---
 
-## Project Structure
+## 🗂️ Project Structure
 
 ```
 ├── astronomy.c/h         # Astronomical calculations
 ├── calendar.c/h          # Calendar logic
 ├── data.c/h              # Data tables and constants
 ├── festivals.c/h         # Festival logic
-├── glyphs.c/h            # Glyph rendering (if any)
+├── glyphs.c/h            # Unicode/ASCII rendering, Coligny notation
 ├── main.c                # Main entry point
+├── main_interactive.c    # TUI entry point
+├── ui_ncurses.c/h        # Terminal UI (ncurses)
+├── celtic_calendar_tui   # Main TUI executable
 ├── test_*.c              # Test and debug programs
-├── celtic_calendar       # Main executable
-├── celtic_chronometre    # Chronometer tool
-└── beta Version/         # Experimental code
+└── .dist/                # (Optional) Build outputs
 ```
 
 ---
 
-## Example Output
+## 🖼️ Example Output
 
 ![Celtic Calendar Example](images/Coligny_calendar_months.png)
 
 ---
 
-## Build & Run
+## ⚙️ Build & Run
 
 ```bash
-# Compile all sources
-gcc -o celtic_calendar main.c astronomy.c calendar.c data.c festivals.c glyphs.c
+# Build the TUI (recommended):
+gcc -Wall -O2 main_interactive.c ui_ncurses.c glyphs.c data.c astronomy.c festivals.c calendar.c -lncursesw -lm -o celtic_calendar_tui
 
-# Run the main program
+# Run the interactive Celtic Calendar:
+./celtic_calendar_tui
+
+# Or build and run the CLI version:
+gcc -Wall -O2 main.c astronomy.c calendar.c data.c festivals.c glyphs.c -lm -o celtic_calendar
 ./celtic_calendar
-```
 
-Or use the provided test programs:
-
-```bash
+# Test utilities:
 gcc -o test_astro test_astro.c astronomy.c
 gcc -o test_dates test_dates.c calendar.c data.c
 ./test_astro
@@ -105,24 +85,26 @@ gcc -o test_dates test_dates.c calendar.c data.c
 
 ---
 
-## References
+## 📚 References
 
 - [Coligny Calendar (Wikipedia)](https://en.wikipedia.org/wiki/Coligny_calendar)
 - [Celtic Festivals](https://en.wikipedia.org/wiki/Celtic_calendar#Festivals)
 
 ---
 
-## License
+## 📝 License
 
 MIT License. See `LICENSE` file for details.
 
 ---
 
-## Acknowledgements
+## 🙏 Acknowledgements
 
 - Images: Wikimedia Commons
 - Research: Academic and open-source Celtic calendar reconstructions
 
 ---
 
-![Celtic Knot](images/Celtic-knot.svg)
+<p align="center">
+  <img src="images/Celtic-knot.svg" width="120"/>
+</p>
