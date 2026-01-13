@@ -306,8 +306,9 @@ const char *get_month_abbrev(int month_index)
  */
 int is_mat_month(int month_index)
 {
-    /* MAT months: 0(SAM), 2(RIV), 4(OGR), 5(CUT), 7(SIM), 10(AED) */
-    static const int mat[] = {1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0};
+    /* MAT months in new order: GIA, SIM, EQU, ELE, AED, CAN, SAM, DUM, RIV, ANA, OGR, CUT */
+    /* Original MAT: SAM, RIV, OGR, CUT, SIM, AED (old idx: 0,2,4,5,7,10) */
+    static const int mat[] = {0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1};
     if(month_index < 0 || month_index > 11) return 0;
     return mat[month_index];
 }
@@ -320,7 +321,9 @@ int is_mat_month(int month_index)
  */
 int get_month_days(int month_index)
 {
-    static const int days[] = {30, 29, 30, 29, 30, 30, 29, 30, 29, 29, 30, 29};
+    /* Month lengths in new order: GIA, SIM, EQU, ELE, AED, CAN, SAM, DUM, RIV, ANA, OGR, CUT */
+    /* Original: 30(SAM),29(DUM),30(RIV),29(ANA),30(OGR),30(CUT),29(GIA),30(SIM),29(EQU),29(ELE),30(AED),29(CAN) */
+    static const int days[] = {29, 30, 29, 29, 30, 29, 30, 29, 30, 29, 30, 30};
     if(month_index < 0 || month_index > 11) return 30;
     return days[month_index];
 }
