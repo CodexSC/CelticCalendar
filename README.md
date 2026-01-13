@@ -1,22 +1,34 @@
+
 <p align="center">
-  <img src="images/Celtic-knot.svg" width="120"/>
+  <img src="images/Celtic-knot.svg" width="120" alt="Celtic knotwork"/>
 </p>
 
-# 🕯️ Celtic Calendar 🕯️
+<h1 align="center">🕯️ Celtic Calendar 🕯️</h1>
 
 <p align="center">
 <b><i>“May the knots of time reveal the wisdom of the ancients.”</i></b>
 </p>
 
 <p align="center">
-<img src="images/Coligny_calendar.png" width="400"/>
+  <img src="images/Coligny_calendar.png" width="400" alt="Coligny Calendar Reconstruction"/>
 </p>
 
 <p align="center">
 <b>A C project for exploring, simulating, and visualizing the ancient Celtic calendar system, with astronomical precision and festival lore.</b>
 </p>
 
+<p align="center">
+<pre>
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  ⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘  ┃
+┃  Celtic Calendar — Coligny Tablet Simulation  ┃
+┃  ⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘⌘  ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+</pre>
+</p>
+
 ---
+
 
 ## ✨ Features & Functionality
 
@@ -39,6 +51,7 @@
 
 ---
 
+
 ## 🗂️ Project Structure
 
 ```
@@ -57,11 +70,25 @@
 
 ---
 
+
 ## 🖼️ Example Output
 
-![Celtic Calendar Example](images/Coligny_calendar_months.png)
+<p align="center">
+<img src="images/Coligny_calendar_months.png" width="500" alt="Celtic Calendar Example Output"/>
+</p>
 
 ---
+
+## 🏺 Original Archaeological Artifact
+
+<p align="center">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/7/7c/Calendrier_de_Coligny.jpg" width="500" alt="Original Coligny Calendar Artifact"/>
+  <br/>
+  <i>The bronze Coligny Calendar tablet, discovered in France (1st century CE).</i>
+</p>
+
+---
+
 
 ## ⚙️ Build & Run
 
@@ -85,6 +112,7 @@ gcc -o test_dates test_dates.c calendar.c data.c
 
 ---
 
+
 ## 📚 References
 
 - [Coligny Calendar (Wikipedia)](https://en.wikipedia.org/wiki/Coligny_calendar)
@@ -105,6 +133,7 @@ MIT License. See `LICENSE` file for details.
 
 ---
 
+
 <p align="center">
-  <img src="images/Celtic-knot.svg" width="120"/>
+  <img src="images/Celtic-knot.svg" width="120" alt="Celtic knotwork"/>
 </p>
