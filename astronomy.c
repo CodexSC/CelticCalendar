@@ -200,8 +200,9 @@ int lunar_celtic_month_index(long jd)
         if (month_count > 13) break;  /* Safety limit */
     }
 
-    /* Return month index (0=Samonios, 11=Cantlos, 12=intercalary) */
-    return (month_count > 11) ? -1 : month_count;  /* -1 for intercalary */
+    /* Patch: shift so 0 = Giamonios, not Samonios */
+    int shifted = (month_count + 6) % 12; // 0=GIA, 6=SAM
+    return (month_count > 11) ? -1 : shifted;  /* -1 for intercalary */
 }
 
 /*
