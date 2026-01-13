@@ -34,6 +34,7 @@
 
 - **Celtic Calendar Simulation**
   - Visualizes months, days, and the unique structure of the Coligny calendar.
+  - Months are now ordered with Giamonios ("winter month") as the first month, aligning the year start with Samhain (winter's beginning).
   - Highlights the dual coicise (half-months), intercalary months, and authentic day counts.
 - **Astronomical Calculations**
   - Computes Julian Day, lunar phases, solar positions, and zodiac signs for any date.
@@ -51,6 +52,26 @@
 
 ---
 
+
+
+## 🗓️ Coligny Month Order (Current)
+
+| # | Month Name      | Abbreviation |
+|---|-----------------|--------------|
+| 1 | Giamonios       | GIA          |
+| 2 | Simivisonnos    | SIM          |
+| 3 | Equos           | EQU          |
+| 4 | Elembivios      | ELE          |
+| 5 | Aedrinios       | AED          |
+| 6 | Cantlos         | CAN          |
+| 7 | Samonios        | SAM          |
+| 8 | Dumannios       | DUM          |
+| 9 | Riuros          | RIV          |
+|10 | Anagantios      | ANA          |
+|11 | Ogronnios       | OGR          |
+|12 | Cutios          | CUT          |
+
+This order starts the year with Giamonios ("winter month"), matching the Samhain tradition.
 
 ## 🗂️ Project Structure
 

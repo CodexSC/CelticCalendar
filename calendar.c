@@ -274,23 +274,25 @@ void age_and_year_in_age(long jd, int *age, int *year_in_age)
     *year_in_age = (adjusted - 1) % AGE_YEARS + 1;
 }
 
+
 const char *get_celtic_month_name(int month_index)
 {
     static const char *months[] = {
-        "Samonios", "Dumannios", "Riuros", "Anagantios",
-        "Ogronnios", "Cutios", "Giamonios", "Simivisonnos",
-        "Equos", "Elembivios", "Aedrinios", "Cantlos"
+        "Giamonios", "Simivisonnos", "Equos", "Elembivios",
+        "Aedrinios", "Cantlos", "Samonios", "Dumannios",
+        "Riuros", "Anagantios", "Ogronnios", "Cutios"
     };
     if (month_index == -1) return "Quimonios";  /* Intercalary month */
     if(month_index < 0 || month_index > 11) return "Unknown";
     return months[month_index];
 }
 
+
 const char *get_month_abbrev(int month_index)
 {
     static const char *abbrevs[] = {
-        "SAM", "DUM", "RIV", "ANA", "OGR", "CUT",
-        "GIA", "SIM", "EQU", "ELE", "AED", "CAN"
+        "GIA", "SIM", "EQU", "ELE", "AED", "CAN",
+        "SAM", "DUM", "RIV", "ANA", "OGR", "CUT"
     };
     if (month_index == -1) return "QUI";  /* Intercalary month */
     if(month_index < 0 || month_index > 11) return "???";
