@@ -168,9 +168,13 @@ int celtic_month_index(long jd)
         doy -= 30;  /* Adjust for intercalary month */
     }
 
-    /* Find month from adjusted day of year */
+    /* Find month from adjusted day of year, using new Giamonios-first order */
+    /* month_start is still cumulative days at start of each month, but now for new order */
+    /* month_start[0]=0 (GIA), [1]=29 (SIM), [2]=59 (EQU), [3]=88 (ELE), [4]=117 (AED), [5]=147 (CAN),
+       [6]=176 (SAM), [7]=206 (DUM), [8]=235 (RIV), [9]=265 (ANA), [10]=294 (OGR), [11]=324 (CUT) */
+    static const int new_month_start[12] = {0, 29, 59, 88, 117, 147, 176, 206, 235, 265, 294, 324};
     for (int m = 11; m >= 0; m--) {
-        if (doy > month_start[m]) {
+        if (doy > new_month_start[m]) {
             return m;
         }
     }
@@ -192,7 +196,8 @@ int day_of_month(long jd)
 
     int month = celtic_month_index(jd);
     if (month < 0) month = 0;
-    return doy - month_start[month];
+    static const int new_month_start[12] = {0, 29, 59, 88, 117, 147, 176, 206, 235, 265, 294, 324};
+    return doy - new_month_start[month];
 }
 
 long jd_start_of_celtic_month(int year, int month)
