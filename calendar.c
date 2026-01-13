@@ -28,9 +28,6 @@
 #define AGE_YEARS 31            /* Years per Age (Saturnian cycle) */
 #define AGE_OFFSET (-16)        /* Offset to align age calculation */
 
-/* Month lengths: 30, 29, 30, 29, 30, 30, 29, 30, 29, 29, 30, 29 */
-static const int month_days[12] = {30, 29, 30, 29, 30, 30, 29, 30, 29, 29, 30, 29};
-
 /* Cumulative days at start of each month */
 static const int month_start[12] = {0, 30, 59, 89, 118, 148, 178, 207, 237, 266, 295, 325};
 

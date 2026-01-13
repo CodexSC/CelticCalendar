@@ -1,12 +1,82 @@
+#define _XOPEN_SOURCE 700
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <wchar.h>
+#include <wctype.h>
+#include <locale.h>
+#include <string.h>
 #include "calendar.h"
 #include "astronomy.h"
 #include "glyphs.h"
 
 /* Default location: Coligny, France (where the calendar was found) */
 #define LATITUDE 46.38
+/* Match the width of month grids (71 chars including borders) */
+#define BOX_WIDTH 71
+
+/* Locale-aware width helpers so emoji align in boxes */
+static void ensure_locale(void)
+{
+    static int initialized = 0;
+    if (!initialized) {
+        setlocale(LC_ALL, "");
+        initialized = 1;
+    }
+}
+
+static int codepoint_width(wchar_t ch)
+{
+    int w = wcwidth(ch);
+    if (w < 0) w = 1;
+    if (w < 2) {
+        if ((ch >= 0x1F300 && ch <= 0x1FAFF) || (ch >= 0x1F600 && ch <= 0x1F64F)) {
+            w = 2;
+        }
+    }
+    return w;
+}
+
+static int display_width(const char *s)
+{
+    ensure_locale();
+    mbstate_t st = {0};
+    int width = 0;
+    const char *p = s;
+    wchar_t wc;
+
+    while (*p) {
+        size_t len = mbrtowc(&wc, p, MB_CUR_MAX, &st);
+        if (len == (size_t)-1 || len == (size_t)-2) {
+            ++p;
+            ++width;
+            memset(&st, 0, sizeof(st));
+            continue;
+        }
+        width += codepoint_width(wc);
+        p += len;
+    }
+    return width;
+}
+
+static void box_border(const char *left, const char *right)
+{
+    fputs(left, stdout);
+    for (int i = 0; i < BOX_WIDTH; i++) fputs("─", stdout);
+    fputs(right, stdout);
+    fputc('\n', stdout);
+}
+
+static void box_line(const char *text)
+{
+    int w = display_width(text);
+    int pad = BOX_WIDTH - w;
+    if (pad < 0) pad = 0;
+    fputs("│", stdout);
+    fputs(text, stdout);
+    for (int i = 0; i < pad; i++) fputc(' ', stdout);
+    fputs("│\n", stdout);
+}
 
 int main(int argc, char *argv[])
 {
@@ -64,19 +134,21 @@ int main(int argc, char *argv[])
     printf("═══════════════════════════════════════════════════\n");
 
     /* Celtic day timing information */
-    printf("┌─────────────────────────────────────────────────┐\n");
-    printf("│ CELTIC DAY RECKONING (Sunset to Sunset)         │\n");
-    printf("├─────────────────────────────────────────────────┤\n");
-    printf("│ Current Time: %02d:%02d                              │\n",
-           local->tm_hour, local->tm_min);
-    printf("│ Sunset Today: %s (Coligny, 46.38°N)            │\n", sunset_str);
+    char line[128];
+    box_border("┌", "┐");
+    box_line(" CELTIC DAY RECKONING (Sunset to Sunset) ");
+    box_border("├", "┤");
+    snprintf(line, sizeof(line), " Current Time: %02d:%02d", local->tm_hour, local->tm_min);
+    box_line(line);
+    snprintf(line, sizeof(line), " Sunset Today: %s (Coligny, 46.38°N)", sunset_str);
+    box_line(line);
     if (after_sunset) {
-        printf("│ ☽ After Sunset — Celtic day has begun          │\n");
+        box_line(" ☽ After Sunset — Celtic day has begun");
     } else {
-        printf("│ ☉ Before Sunset — Still previous Celtic day    │\n");
+        box_line(" ☉ Before Sunset — Still previous Celtic day");
     }
-    printf("│ \"The night in each case precedes the day.\"      │\n");
-    printf("└─────────────────────────────────────────────────┘\n");
+    box_line(" \"The night in each case precedes the day.\"");
+    box_border("└", "┘");
     printf("\n");
 
     /* ═══════════════════════════════════════════════════════════════
@@ -87,16 +159,16 @@ int main(int argc, char *argv[])
     int met_cycle = metonic_cycle_number(celtic_jd);
     double met_drift = metonic_drift_hours(celtic_jd);
 
-    printf("┌─────────────────────────────────────────────────┐\n");
-    printf("│ METONIC CYCLE (19-Year Lunisolar Sync)          │\n");
-    printf("├─────────────────────────────────────────────────┤\n");
-    printf("│ Cycle #%d | Year %d of 19 | Lunation %d of 235  │\n",
-           met_cycle, met_year, met_lunation);
-    printf("│ Accumulated drift: %.1f hours (%.1f days)        │\n",
-           met_drift, met_drift / 24.0);
-    printf("│ 235 moons = 19 years (error: ~2 hrs/cycle)      │\n");
-    printf("└─────────────────────────────────────────────────┘\n");
-    printf("\n");
+        box_border("┌", "┐");
+        box_line(" METONIC CYCLE (19-Year Lunisolar Sync) ");
+        box_border("├", "┤");
+        snprintf(line, sizeof(line), " Cycle #%d | Year %d of 19 | Lunation %d of 235", met_cycle, met_year, met_lunation);
+        box_line(line);
+        snprintf(line, sizeof(line), " Accumulated drift: %.1f hours (%.1f days)", met_drift, met_drift / 24.0);
+        box_line(line);
+        box_line(" 235 moons = 19 years (error: ~2 hrs/cycle)");
+        box_border("└", "┘");
+        printf("\n");
 
     /* ═══════════════════════════════════════════════════════════════
      * PLEIADES HELIACAL RISING (Samhain Marker)
@@ -104,20 +176,22 @@ int main(int argc, char *argv[])
     int pleiades_days = days_to_pleiades_rising(celtic_jd);
     int pleiades_now = is_pleiades_rising(celtic_jd);
 
-    printf("┌─────────────────────────────────────────────────┐\n");
-    printf("│ PLEIADES (Seven Sisters) - Samhain Marker       │\n");
-    printf("├─────────────────────────────────────────────────┤\n");
+    box_border("┌", "┐");
+    box_line(" PLEIADES (Seven Sisters) - Samhain Marker ");
+    box_border("├", "┤");
     if (pleiades_now) {
-        printf("│ ✧ HELIACAL RISING NOW ✧                        │\n");
-        printf("│ The Pleiades rise before dawn - Samhain time!  │\n");
+        box_line(" ✧ HELIACAL RISING NOW ✧");
+        box_line(" The Pleiades rise before dawn - Samhain time!");
     } else if (pleiades_days > 0) {
-        printf("│ Days until heliacal rising: %d                  │\n", pleiades_days);
-        printf("│ (Pleiades hidden by Sun's glare)               │\n");
+        snprintf(line, sizeof(line), " Days until heliacal rising: %d", pleiades_days);
+        box_line(line);
+        box_line(" (Pleiades hidden by Sun's glare)");
     } else {
-        printf("│ Days since heliacal rising: %d                  │\n", -pleiades_days);
-        printf("│ (Pleiades visible in pre-dawn sky)             │\n");
+        snprintf(line, sizeof(line), " Days since heliacal rising: %d", -pleiades_days);
+        box_line(line);
+        box_line(" (Pleiades visible in pre-dawn sky)");
     }
-    printf("└─────────────────────────────────────────────────┘\n");
+    box_border("└", "┘");
     printf("\n");
 
     /* ═══════════════════════════════════════════════════════════════
@@ -134,23 +208,32 @@ int main(int argc, char *argv[])
 
     double sun_long = sun_longitude(celtic_jd);
 
-    printf("┌─────────────────────────────────────────────────┐\n");
-    printf("│ THE EIGHT-FOLD YEAR (Wheel of the Year)         │\n");
-    printf("├─────────────────────────────────────────────────┤\n");
-    printf("│ Current Sun Longitude: %5.1f°                   │\n", sun_long);
-    printf("│                                                 │\n");
-    printf("│ ══ SOLSTICES & EQUINOXES (Quarter Days) ══      │\n");
-    printf("│ Yule    (270°) Winter Solstice:  %+4d days      │\n", yule_days);
-    printf("│ Ostara  (  0°) Vernal Equinox:   %+4d days      │\n", ostara_days);
-    printf("│ Litha   ( 90°) Summer Solstice:  %+4d days      │\n", litha_days);
-    printf("│ Mabon   (180°) Autumn Equinox:   %+4d days      │\n", mabon_days);
-    printf("│                                                 │\n");
-    printf("│ ══ CROSS-QUARTERS (Fire Festivals) ══           │\n");
-    printf("│ Samhain (225°) Winter's Gate:    %+4d days      │\n", sam_days);
-    printf("│ Imbolc  (315°) Spring Stirring:  %+4d days      │\n", imb_days);
-    printf("│ Beltane ( 45°) Summer's Gate:    %+4d days      │\n", bel_days);
-    printf("│ Lughnasadh(135°) Harvest Home:   %+4d days      │\n", lug_days);
-    printf("│                                                 │\n");
+    box_border("┌", "┐");
+    box_line(" THE EIGHT-FOLD YEAR (Wheel of the Year) ");
+    box_border("├", "┤");
+    snprintf(line, sizeof(line), " Current Sun Longitude: %5.1f°", sun_long);
+    box_line(line);
+    box_line(" ");
+    box_line(" ══ SOLSTICES & EQUINOXES (Quarter Days) ══");
+    snprintf(line, sizeof(line), " Yule    (270°) Winter Solstice:  %+4d days", yule_days);
+    box_line(line);
+    snprintf(line, sizeof(line), " Ostara  (  0°) Vernal Equinox:   %+4d days", ostara_days);
+    box_line(line);
+    snprintf(line, sizeof(line), " Litha   ( 90°) Summer Solstice:  %+4d days", litha_days);
+    box_line(line);
+    snprintf(line, sizeof(line), " Mabon   (180°) Autumn Equinox:   %+4d days", mabon_days);
+    box_line(line);
+    box_line(" ");
+    box_line(" ══ CROSS-QUARTERS (Fire Festivals) ══");
+    snprintf(line, sizeof(line), " Samhain (225°) Winter's Gate:    %+4d days", sam_days);
+    box_line(line);
+    snprintf(line, sizeof(line), " Imbolc  (315°) Spring Stirring:  %+4d days", imb_days);
+    box_line(line);
+    snprintf(line, sizeof(line), " Beltane ( 45°) Summer's Gate:    %+4d days", bel_days);
+    box_line(line);
+    snprintf(line, sizeof(line), " Lughnasadh(135°) Harvest Home:   %+4d days", lug_days);
+    box_line(line);
+    box_line(" ");
 
     /* Highlight nearest event from the eight-fold year */
     int nearest_days;
@@ -159,9 +242,9 @@ int main(int argc, char *argv[])
         "Yule", "Imbolc", "Ostara", "Beltane",
         "Litha", "Lughnasadh", "Mabon", "Samhain"
     };
-    printf("│ → Next: %-10s in %3d days                 │\n",
-           eightfold_names[nearest], nearest_days);
-    printf("└─────────────────────────────────────────────────┘\n");
+    snprintf(line, sizeof(line), " → Next: %-10s in %3d days", eightfold_names[nearest], nearest_days);
+    box_line(line);
+    box_border("└", "┘");
     printf("\n");
 
     print_celtic_month_lunar(month_idx, jd_month_start, celtic_jd, jd, celtic_month_days, after_sunset);
