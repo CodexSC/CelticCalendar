@@ -4,7 +4,7 @@
 		{
 			"label": "build-tui",
 			"type": "shell",
-			"command": "gcc -Wall -O2 -I. main_interactive.c ui_ncurses.c glyphs.c data.c astronomy.c festivals.c calendar.c -lncursesw -lm -o celtic_calendar_tui && gcc -Wall -O2 -I. deco_beta_version/main_interactive.c deco_beta_version/ui_ncurses.c deco_beta_version/glyphs.c data.c astronomy.c festivals.c calendar.c -lncursesw -lm -o celtic_calendar_tui_beta",
+			"command": "gcc -Wall -O2 -I. main_interactive.c ui_ncurses.c glyphs.c data.c astronomy.c festivals.c calendar.c -lncursesw -lm -o celtic_calendar_tui",
 			"problemMatcher": []
 		}
 	]
