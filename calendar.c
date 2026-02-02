@@ -1,5 +1,7 @@
 #include "calendar.h"
+#include "astronomy.h"
 #include <time.h>
+#include <stdio.h>
 
 /*
  * Celtic Calendar Epoch and Cycle Constants
@@ -16,27 +18,75 @@
  * This aligns Celtic Year 1 with Kali Yuga Year 1
  */
 
-#define ANCHOR_JD 2460981L      /* Nov 1, 2025 = JD 2460981 */
-#define ANCHOR_YEAR 5127        /* Celtic Year 5127 starts Nov 1, 2025 (Kali Yuga aligned) */
-#define ANCHOR_CYCLE_POS 0      /* Year 5127 is at position 0 in the 5-year cycle */
-
-#define CYCLE_YEARS 5           /* 5-year Coligny cycle */
-#define CYCLE_DAYS 1830         /* Days in 5-year cycle */
-#define NORMAL_YEAR 354         /* Days in normal year (no intercalary) */
-#define INTERCALARY_YEAR 384    /* Days in year with intercalary month */
+#define ANCHOR_YEAR 5127        /* Celtic Year 5127 starts at Samhain of 2025 */
+#define ANCHOR_SAMHAIN_YEAR 2025/* Gregorian year whose Samhain anchors the Celtic year */
 
 #define AGE_YEARS 31            /* Years per Age (Saturnian cycle) */
 #define AGE_OFFSET (-16)        /* Offset to align age calculation */
 
-/* Cumulative days at start of each month */
-static const int month_start[12] = {0, 30, 59, 89, 118, 148, 178, 207, 237, 266, 295, 325};
+/*
+ * Cumulative days at start of each month (Giamos-first ordering)
+ * Order: Giamonios, Simivisonnos, Equos, Elembivios, Aedrinios, Cantlos,
+ *        Samonios, Dumannios, Riuros, Anagantios, Ogronnios, Cutios
+ * This labels the Samhain start month as Giamonios.
+ */
+static const int month_start[12] = {0, 29, 59, 88, 117, 147, 176, 206, 235, 265, 294, 324};
 
-/* Days in each year of the 5-year cycle (1-indexed in cycle) */
-/* Years 1 and 3 have intercalary months */
-static const int year_days_in_cycle[5] = {384, 354, 384, 354, 354};
+/* Legacy cycle constants retained for documentation (unused) */
+/* static const int year_days_in_cycle[5] = {384, 354, 384, 354, 354}; */
+/* static const int cycle_year_start[5] = {0, 384, 738, 1122, 1476}; */
 
-/* Cumulative days at start of each year in cycle */
-static const int cycle_year_start[5] = {0, 384, 738, 1122, 1476};
+/* Target solar longitude for Samhain */
+#define SAMHAIN_LONG 225.0
+
+/* Find the JD of Samhain (Sun ≈ 225°) for a given Gregorian year */
+static long jd_true_samhain_for_year(int greg_year)
+{
+    long start = jd_from_ymd(greg_year, 10, 15); /* search window Oct 15 */
+    double best_diff = 1e9;
+    long best_jd = start;
+    for (int d = 0; d <= 60; d++) {
+        long jd = start + d;
+        double diff = sun_longitude(jd) - SAMHAIN_LONG;
+        if (diff > 180.0) diff -= 360.0;
+        if (diff < -180.0) diff += 360.0;
+        double ad = (diff < 0) ? -diff : diff;
+        if (ad < best_diff) {
+            best_diff = ad;
+            best_jd = jd;
+        }
+    }
+    return best_jd;
+}
+
+/* Convert JD to Gregorian year (rough, good enough for selecting Samhain year) */
+static int gregorian_year_from_jd(long jd)
+{
+    long z = jd + 1;
+    long alpha = (long)((z - 1867216.25) / 36524.25);
+    long a = z + 1 + alpha - alpha/4;
+    long b = a + 1524;
+    long c = (long)((b - 122.1) / 365.25);
+    int greg_month = (int)(((b - (long)(365.25 * c)) / 30.6001) < 14 ? ((b - (long)(365.25 * c)) / 30.6001) - 1 : ((b - (long)(365.25 * c)) / 30.6001) - 13);
+    int greg_year = (greg_month > 2) ? (int)(c - 4716) : (int)(c - 4715);
+    return greg_year;
+}
+
+/* Get Samhain boundaries around a JD (solar Samhain ≈ 225°) */
+static void samhain_bounds(long jd, long *prev_sam, long *next_sam, int *prev_sam_year)
+{
+    int gy = gregorian_year_from_jd(jd);
+    long this_sam = jd_true_samhain_for_year(gy);
+    if (jd < this_sam) {
+        *prev_sam_year = gy - 1;
+        *prev_sam = jd_true_samhain_for_year(gy - 1);
+        *next_sam = this_sam;
+    } else {
+        *prev_sam_year = gy;
+        *prev_sam = this_sam;
+        *next_sam = jd_true_samhain_for_year(gy + 1);
+    }
+}
 
 long jd_from_ymd(int Y, int M, int D)
 {
@@ -61,27 +111,11 @@ long jd_today(void)
  */
 int celtic_year_from_jd(long jd)
 {
-    long delta = jd - ANCHOR_JD;
-
-    /* Calculate full 5-year cycles from anchor */
-    int full_cycles = (int)(delta / CYCLE_DAYS);
-    int remaining_days = (int)(delta % CYCLE_DAYS);
-
-    if (remaining_days < 0) {
-        full_cycles--;
-        remaining_days += CYCLE_DAYS;
-    }
-
-    /* Find year within cycle */
-    int year_in_cycle = 0;
-    for (int i = 0; i < 5; i++) {
-        if (remaining_days < cycle_year_start[i] + year_days_in_cycle[i]) {
-            year_in_cycle = i;
-            break;
-        }
-    }
-
-    return ANCHOR_YEAR + full_cycles * CYCLE_YEARS + year_in_cycle;
+    long prev_sam, next_sam;
+    int prev_year;
+    samhain_bounds(jd, &prev_sam, &next_sam, &prev_year);
+    int delta_years = prev_year - ANCHOR_SAMHAIN_YEAR;
+    return ANCHOR_YEAR + delta_years;
 }
 
 /*
@@ -89,64 +123,34 @@ int celtic_year_from_jd(long jd)
  */
 int day_of_year(long jd)
 {
-    long delta = jd - ANCHOR_JD;
-
-    int full_cycles = (int)(delta / CYCLE_DAYS);
-    int remaining_days = (int)(delta % CYCLE_DAYS);
-
-    if (remaining_days < 0) {
-        full_cycles--;
-        remaining_days += CYCLE_DAYS;
-    }
-
-    /* Find day within current year */
-    for (int i = 0; i < 5; i++) {
-        if (remaining_days < cycle_year_start[i] + year_days_in_cycle[i]) {
-            return remaining_days - cycle_year_start[i] + 1;
-        }
-    }
-
-    return remaining_days - cycle_year_start[4] + 1;
+    long prev_sam, next_sam;
+    int prev_year;
+    samhain_bounds(jd, &prev_sam, &next_sam, &prev_year);
+    (void)prev_year;
+    return (int)(jd - prev_sam) + 1;
 }
 
 /*
  * Helper: get year_in_cycle (0-4) from Celtic year number
  * Uses ANCHOR_CYCLE_POS to correctly align cycle position
  */
-static int year_in_cycle_from_year(int year)
-{
-    int delta = year - ANCHOR_YEAR;
-    int pos = (ANCHOR_CYCLE_POS + (delta % CYCLE_YEARS) + CYCLE_YEARS) % CYCLE_YEARS;
-    return pos;
-}
-
+/* Legacy placeholder; no longer used with Samhain-based year starts */
 /*
  * Helper: get year_in_cycle (0-4) directly from JD
  */
-static int year_in_cycle_from_jd(long jd)
-{
-    long delta = jd - ANCHOR_JD;
-    int remaining_days = (int)(delta % CYCLE_DAYS);
-
-    if (remaining_days < 0) {
-        remaining_days += CYCLE_DAYS;
-    }
-
-    for (int i = 0; i < 5; i++) {
-        if (remaining_days < cycle_year_start[i] + year_days_in_cycle[i]) {
-            return i;
-        }
-    }
-    return 4;  /* Last year of cycle */
-}
+/* Legacy placeholder; no longer used with Samhain-based year starts */
+/* Cycle helpers removed; Samhain-based year start replaces cycle math */
 
 /*
  * Get the length of the current Celtic year
  */
 int current_year_length(long jd)
 {
-    int yic = year_in_cycle_from_jd(jd);
-    return year_days_in_cycle[yic];
+    long prev_sam, next_sam;
+    int prev_year;
+    samhain_bounds(jd, &prev_sam, &next_sam, &prev_year);
+    (void)prev_year;
+    return (int)(next_sam - prev_sam);
 }
 
 /*
@@ -156,25 +160,8 @@ int current_year_length(long jd)
 int celtic_month_index(long jd)
 {
     int doy = day_of_year(jd);
-
-    /* Handle intercalary month at start of years 1 and 3 in cycle */
-    int year_in_cycle = year_in_cycle_from_jd(jd);
-
-    /* Years 0 and 2 in cycle (1st and 3rd years) have intercalary month */
-    if (year_in_cycle == 0 || year_in_cycle == 2) {
-        if (doy <= 30) {
-            return -1;  /* Intercalary month (Quimonios) */
-        }
-        doy -= 30;  /* Adjust for intercalary month */
-    }
-
-    /* Find month from adjusted day of year, using new Giamonios-first order */
-    /* month_start is still cumulative days at start of each month, but now for new order */
-    /* month_start[0]=0 (GIA), [1]=29 (SIM), [2]=59 (EQU), [3]=88 (ELE), [4]=117 (AED), [5]=147 (CAN),
-       [6]=176 (SAM), [7]=206 (DUM), [8]=235 (RIV), [9]=265 (ANA), [10]=294 (OGR), [11]=324 (CUT) */
-    static const int new_month_start[12] = {0, 29, 59, 88, 117, 147, 176, 206, 235, 265, 294, 324};
     for (int m = 11; m >= 0; m--) {
-        if (doy > new_month_start[m]) {
+        if (doy > month_start[m]) {
             return m;
         }
     }
@@ -184,55 +171,18 @@ int celtic_month_index(long jd)
 int day_of_month(long jd)
 {
     int doy = day_of_year(jd);
-    int year_in_cycle = year_in_cycle_from_jd(jd);
-
-    /* Handle intercalary month */
-    if (year_in_cycle == 0 || year_in_cycle == 2) {
-        if (doy <= 30) {
-            return doy;  /* Day in intercalary month */
-        }
-        doy -= 30;
-    }
-
     int month = celtic_month_index(jd);
-    if (month < 0) month = 0;
-    static const int new_month_start[12] = {0, 29, 59, 88, 117, 147, 176, 206, 235, 265, 294, 324};
-    return doy - new_month_start[month];
+    return doy - month_start[month];
 }
 
 long jd_start_of_celtic_month(int year, int month)
 {
-    /* Calculate JD for start of given Celtic year */
-    int delta_years = year - ANCHOR_YEAR;
-    int full_cycles = delta_years / CYCLE_YEARS;
-    int rem = delta_years % CYCLE_YEARS;
-    if (rem < 0) {
-        full_cycles--;
-        rem += CYCLE_YEARS;
-    }
-
-    long jd = ANCHOR_JD + (long)full_cycles * CYCLE_DAYS;
-
-    /* Add days for years within the current cycle */
-    for (int i = 0; i < rem; i++) {
-        int pos = (ANCHOR_CYCLE_POS + i) % CYCLE_YEARS;
-        jd += year_days_in_cycle[pos];
-    }
-
-    /* Get position of target year in cycle using consistent helper */
-    int year_in_cycle = year_in_cycle_from_year(year);
-
-    /* Add intercalary month days if this year has one */
-    if (year_in_cycle == 0 || year_in_cycle == 2) {
-        jd += 30;  /* Skip intercalary month at start of year */
-    }
-
-    /* Add days for months 0 to month-1 */
+    int samhain_year = ANCHOR_SAMHAIN_YEAR + (year - ANCHOR_YEAR);
+    long jd_year_start = jd_true_samhain_for_year(samhain_year);
     if (month > 0 && month < 12) {
-        jd += month_start[month];
+        jd_year_start += month_start[month];
     }
-
-    return jd;
+    return jd_year_start;
 }
 
 /*
@@ -240,23 +190,8 @@ long jd_start_of_celtic_month(int year, int month)
  */
 long jd_start_of_celtic_year(int year)
 {
-    int delta_years = year - ANCHOR_YEAR;
-    int full_cycles = delta_years / CYCLE_YEARS;
-    int rem = delta_years % CYCLE_YEARS;
-    if (rem < 0) {
-        full_cycles--;
-        rem += CYCLE_YEARS;
-    }
-
-    long jd = ANCHOR_JD + (long)full_cycles * CYCLE_DAYS;
-
-    /* Add days for years within the current cycle */
-    for (int i = 0; i < rem; i++) {
-        int pos = (ANCHOR_CYCLE_POS + i) % CYCLE_YEARS;
-        jd += year_days_in_cycle[pos];
-    }
-
-    return jd;
+    int samhain_year = ANCHOR_SAMHAIN_YEAR + (year - ANCHOR_YEAR);
+    return jd_true_samhain_for_year(samhain_year);
 }
 
 double elapsed_fraction(long jd)
@@ -311,8 +246,7 @@ const char *get_month_abbrev(int month_index)
  */
 int is_mat_month(int month_index)
 {
-    /* MAT months in new order: GIA, SIM, EQU, ELE, AED, CAN, SAM, DUM, RIV, ANA, OGR, CUT */
-    /* Original MAT: SAM, RIV, OGR, CUT, SIM, AED (old idx: 0,2,4,5,7,10) */
+    /* MAT months in Giamos-first order: SIM, AED, SAM, RIV, OGR, CUT */
     static const int mat[] = {0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1};
     if(month_index < 0 || month_index > 11) return 0;
     return mat[month_index];
@@ -326,8 +260,7 @@ int is_mat_month(int month_index)
  */
 int get_month_days(int month_index)
 {
-    /* Month lengths in new order: GIA, SIM, EQU, ELE, AED, CAN, SAM, DUM, RIV, ANA, OGR, CUT */
-    /* Original: 30(SAM),29(DUM),30(RIV),29(ANA),30(OGR),30(CUT),29(GIA),30(SIM),29(EQU),29(ELE),30(AED),29(CAN) */
+    /* Authentic lengths rotated so Giamonios opens the year */
     static const int days[] = {29, 30, 29, 29, 30, 29, 30, 29, 30, 29, 30, 30};
     if(month_index < 0 || month_index > 11) return 30;
     return days[month_index];
@@ -345,9 +278,7 @@ int is_atenoux(int day_of_month)
 /*
  * D AMB (D AMBRIX RI) - inauspicious days pattern from Coligny:
  * First half (1-15): Days 5 and 11 only
- * Second half (16-30): Every odd day EXCEPT day 16 (1a in Celtic counting)
- * (Day 1 considered neither odd nor even in Celtic tradition)
- */
+ * Second half (16-30): Every odd day EXCEPT day 16 (=day 1a) */
 int is_d_amb(int day_of_month)
 {
     if (day_of_month <= 15) {

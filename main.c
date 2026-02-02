@@ -125,6 +125,12 @@ int main(int argc, char *argv[])
     long jd_month_start = find_full_moon_before(celtic_jd);
     int celtic_month_days = lunar_month_length(celtic_jd);
 
+    /* Debugging: Print JD and Celtic JD */
+    printf("JD: %ld | Celtic JD: %ld\n", jd, celtic_jd);
+
+    /* Debugging: Print month index and JD month start */
+    printf("Month Index: %d | JD Month Start: %ld\n", month_idx, jd_month_start);
+
     printf("Celtic Calendar — Daily View (Lunar-Synced)\n");
     printf("═══════════════════════════════════════════════════\n");
     printf("Celtic Year: %d\n", year);

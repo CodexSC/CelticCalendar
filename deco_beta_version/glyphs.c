@@ -499,7 +499,7 @@ void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, lo
 {
     int today_day_raw = (int)(jd_celtic - jd_start) + 1;
     int in_month = (today_day_raw >= 1 && today_day_raw <= month_days);
-    int today_day = in_month ? today_day_raw : 0; /* use 0 to keep the panel present even when outside */
+    int today_day = in_month ? today_day_raw : 0; /* keep panel hidden when outside month */
     int celtic_weekday = (int)((jd_celtic + 1) % 7);
     int today_moon = moon_phase(jd_actual);
     int today_moon_zodiac = moon_sign(jd_actual);

@@ -5,17 +5,39 @@
 
 #define PI 3.14159265358979323846
 
-/* Moon phases: 0=new, 1=first quarter, 2=full, 3=last quarter */
+/* Moon phases (8-step): 0=new, 1=waxing crescent, 2=first quarter, 3=waxing gibbous,
+ * 4=full, 5=waning gibbous, 6=last quarter, 7=waning crescent. Primary phases stay
+ * single-day using a narrow window. */
 int moon_phase(long jd)
 {
     /* Reference: New Moon on Jan 6, 2000 at JD 2451550.1 */
-    double phase = fmod((jd - 2451550.1) / 29.53058867, 1.0);
+    const double synodic = 29.53058867;
+    double phase = fmod((jd - 2451550.1) / synodic, 1.0);
     if (phase < 0) phase += 1.0;
-    if (phase < 0.125) return 0;      /* New moon */
-    else if (phase < 0.375) return 1; /* First quarter (waxing) */
-    else if (phase < 0.625) return 2; /* Full moon */
-    else if (phase < 0.875) return 3; /* Last quarter (waning) */
-    else return 0;                    /* New moon */
+
+    double age_days = phase * synodic;          /* 0 .. ~29.53 */
+    double d_new   = fmin(age_days, synodic - age_days);          /* distance to nearest new */
+    double d_full  = fabs(age_days - synodic * 0.5);              /* distance to full */
+    double d_fq    = fabs(age_days - synodic * 0.25);             /* distance to first quarter */
+    double d_lq    = fabs(age_days - synodic * 0.75);             /* distance to last quarter */
+
+    const double peak_window = 0.6;  /* in days; ensures only one calendar day marked */
+
+    /* Snap to the closest primary phase if within the narrow window */
+    if (d_new  <= peak_window) return 0;
+    if (d_fq   <= peak_window) return 2;
+    if (d_full <= peak_window) return 4;
+    if (d_lq   <= peak_window) return 6;
+
+    /* Round to the nearest octant, but demote primaries outside the peak window */
+    int idx = (int)floor((phase * 8.0) + 0.5) % 8;
+
+    if (idx == 0 && d_new  > peak_window) idx = (phase < 0.5) ? 1 : 7;
+    if (idx == 2 && d_fq   > peak_window) idx = (phase < 0.25) ? 1 : 3;
+    if (idx == 4 && d_full > peak_window) idx = (phase < 0.5) ? 3 : 5;
+    if (idx == 6 && d_lq   > peak_window) idx = (phase < 0.75) ? 5 : 7;
+
+    return idx;
 }
 
 /*
@@ -179,6 +201,7 @@ int lunar_celtic_month_index(long jd)
     int greg_month = (e < 14) ? e - 1 : e - 13;
     int greg_year = (greg_month > 2) ? c - 4716 : c - 4715;
 
+
     /* Find Samonios start for this Celtic year */
     int samhain_year = (greg_month >= 11) ? greg_year : greg_year - 1;
     long jd_samonios = find_samonios_start(samhain_year);
@@ -265,6 +288,7 @@ double calculate_sunset(long jd, double latitude)
     /* Sunset time = solar noon + hour angle */
     /* Solar noon is approximately 12:00 local solar time */
     double sunset_hour = 12.0 + H;
+
 
     return sunset_hour;
 }
@@ -553,7 +577,7 @@ long find_solilunar_samhain(int greg_year)
 
     /* Check if Full Moon or New Moon falls on solar Samhain (perfect alignment) */
     int phase = moon_phase(jd_solar);
-    if (phase == 2 || phase == 0) {
+    if (phase == 4 || phase == 0) {
         return jd_solar;  /* Perfect solilunar alignment! */
     }
 
@@ -594,7 +618,7 @@ int is_solilunar_festival(long jd)
 
         if (diff >= -2.0 && diff <= 2.0) {
             /* Sun is at cross-quarter! Check moon */
-            if (phase == 2) return 1;  /* Full Moon */
+            if (phase == 4) return 1;  /* Full Moon */
             if (phase == 0) return 2;  /* New Moon */
         }
     }

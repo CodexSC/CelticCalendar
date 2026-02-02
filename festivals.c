@@ -18,15 +18,11 @@
  *   SINDIV IVOS = "This day a festival" (exceptional importance)
  */
 
+/*
+ * Solar-tied festivals (quarters and cross-quarters) are resolved dynamically
+ * from the Sun's position; keep this table for any non-astronomical IVOS days.
+ */
 const Festival festivals[] = {
-    {"Samhain", 0, 1},                      /* Nov 1 - Celtic New Year, 219° */
-    {"Yule - Winter Solstice", 1, 21},      /* Dec 21 - Sun at 270° */
-    {"Imbolc", 3, 3},                       /* Feb 1 - Sun at ~313° */
-    {"Ostara - Vernal Equinox", 4, 20},     /* Mar 20 - Sun at 0° */
-    {"Beltane", 6, 2},                      /* May 1 - Start of light half, ~41° */
-    {"Litha - Summer Solstice", 7, 23},     /* Jun 21 - Sun at 90° */
-    {"Lughnasadh", 9, 4},                   /* Aug 1 - Sun at ~129° */
-    {"Mabon - Autumn Equinox", 10, 26}      /* Sep 22 - Sun at 180° */
 };
 
 const int FESTIVAL_COUNT = sizeof(festivals)/sizeof(festivals[0]);
