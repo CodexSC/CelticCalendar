@@ -41,7 +41,7 @@
 - **Festival Detection**
   - Automatically marks major Celtic festivals (Samhain, Imbolc, Beltane, Lughnasadh) and astronomical cross-quarters.
 - **TUI (Terminal User Interface)**
-  - Navigate the calendar with arrow keys in a richly decorated, knotwork-inspired interface.
+  - Navigate the calendar with arrow keys in a modestly decorated, knotwork-inspired interface.
   - ASCII/Unicode art, color highlights, and Celtic knot motifs throughout.
 - **Coligny Tablet Notation**
   - Displays reconstructed day notations, auspicious/inauspicious days, and festival markers as on the original bronze tablet.
