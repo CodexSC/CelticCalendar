@@ -226,7 +226,7 @@ static void print_coligny_tablet(int month_index, int today_day, int mat, long j
 
     long jd_today = jd_start + today_day - 1;
     if (is_festival_day(month_index, today_day, jd_today)) {
-        printf("║  [IVOS - Festival Day]                          ║\n");
+        printf("║  [IVOS - Festival Day]                           ║\n");
     }
 
     printf("╚══════════════════════════════════════════════════╝\n");
@@ -330,6 +330,13 @@ static void print_day_cell(int day, int mp, char marker, int is_festival, int is
 }
 
 /* Festival lookup: month/day match or astronomical cross-quarters */
+/* Treat festivals as sunset-to-sunset: include the alignment day (0)
+ * and the civil day before (offset +1 covers the eve through next sunrise). */
+static int in_festival_window(int offset)
+{
+    return (offset == 0 || offset == 1);
+}
+
 static int is_festival_day(int month_index, int day, long jd)
 {
     for (int f = 0; f < FESTIVAL_COUNT; f++) {
@@ -343,8 +350,10 @@ static int is_festival_day(int month_index, int day, long jd)
     int samhain = days_to_true_samhain(jd); int imbolc = days_to_true_imbolc(jd);
     int beltane = days_to_true_beltane(jd); int lughnasadh = days_to_true_lughnasadh(jd);
 
-    if (yule == 0 || ostara == 0 || litha == 0 || mabon == 0 ||
-        samhain == 0 || imbolc == 0 || beltane == 0 || lughnasadh == 0) {
+    if (in_festival_window(yule) || in_festival_window(ostara) ||
+        in_festival_window(litha) || in_festival_window(mabon) ||
+        in_festival_window(samhain) || in_festival_window(imbolc) ||
+        in_festival_window(beltane) || in_festival_window(lughnasadh)) {
         return 1;
     }
     return 0;

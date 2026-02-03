@@ -21,7 +21,8 @@ int moon_phase(long jd)
     double d_fq    = fabs(age_days - synodic * 0.25);             /* distance to first quarter */
     double d_lq    = fabs(age_days - synodic * 0.75);             /* distance to last quarter */
 
-    const double peak_window = 0.6;  /* in days; ensures only one calendar day marked */
+    /* Window for primary phases; keep it narrow but not too tight so new/full land visibly */
+    const double peak_window = 0.55;  /* in days */
 
     /* Snap to the closest primary phase if within the narrow window */
     if (d_new  <= peak_window) return 0;
@@ -482,8 +483,9 @@ int days_to_solar_longitude(long jd, double target_longitude)
     if (diff > 180.0) diff -= 360.0;
     if (diff < -180.0) diff += 360.0;
 
-    /* Sun moves ~0.9856° per day */
-    return (int)(diff / 0.9856);
+    /* Sun moves ~0.9856° per day; round to nearest day to avoid double-counting */
+    double days = diff / 0.9856;
+    return (int)lround(days);
 }
 
 /*
