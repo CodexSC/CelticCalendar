@@ -361,6 +361,7 @@ static int is_festival_day(int month_index, int day, long jd)
 
 static void print_grid_half(int month_index, long jd_start, int start_day, int end_day, int today_day)
 {
+    int month_days_here = lunar_month_length(jd_start);
     long jd_of_start = jd_start + start_day - 1;
     int weekday_of_start = (int)((jd_of_start + 1) % 7);
 
@@ -380,6 +381,14 @@ static void print_grid_half(int month_index, long jd_start, int start_day, int e
         }
 
         int mp = moon_phase(jd);
+        /* For the virtual DIVERTOMU day (30th of a 29-day month), avoid showing
+         * the new full moon of the next lunation. Use the previous day's phase
+         * so the virtual day doesn't duplicate the coming full moon. */
+        if (month_days_here == 29 && day == 30) {
+            /* Force virtual day to a gibbous look to avoid duplicating the next full. */
+            mp = moon_phase(jd - 1);
+            if (mp == 4) mp = 3;
+        }
         char marker = day_marker(month_index, day);
         int festival = is_festival_day(month_index, day, jd);
 
@@ -507,7 +516,8 @@ void print_celtic_month(int month_index, long jd_start, long jd_today)
 void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, long jd_actual, int month_days, int after_sunset)
 {
     int today_day_raw = (int)(jd_celtic - jd_start) + 1;
-    int in_month = (today_day_raw >= 1 && today_day_raw <= month_days);
+    int in_month = (today_day_raw >= 1 && today_day_raw <= month_days) ||
+                   (month_days == 29 && today_day_raw == 30); /* allow virtual DIVERTOMU */
     int today_day = in_month ? today_day_raw : 0; /* use 0 to keep the panel present even when outside */
     int celtic_weekday = (int)((jd_celtic + 1) % 7);
     int today_moon = moon_phase(jd_actual);
@@ -607,7 +617,13 @@ void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, lo
     printf("\n");
     print_border("└","┴","┘");
 
-    if (month_days == 29) printf("\n        ◎ XXX  DIVERTOMU  (virtual 30th day)\n");
+    if (month_days == 29) {
+        if (today_day == 30) {
+            printf("\n        ◎ XXX  DIVERTOMU  (virtual 30th day) [TODAY]\n");
+        } else {
+            printf("\n        ◎ XXX  DIVERTOMU  (virtual 30th day)\n");
+        }
+    }
 
     if (in_month) {
         print_coligny_tablet(month_index, today_day, mat, jd_start);

@@ -24,14 +24,6 @@
 #define AGE_YEARS 31            /* Years per Age (Saturnian cycle) */
 #define AGE_OFFSET (-16)        /* Offset to align age calculation */
 
-/*
- * Cumulative days at start of each month (Giamos-first ordering)
- * Order: Giamonios, Simivisonnos, Equos, Elembivios, Aedrinios, Cantlos,
- *        Samonios, Dumannios, Riuros, Anagantios, Ogronnios, Cutios
- * This labels the Samhain start month as Giamonios.
- */
-static const int month_start[12] = {0, 29, 59, 88, 117, 147, 176, 206, 235, 265, 294, 324};
-
 /* Legacy cycle constants retained for documentation (unused) */
 /* static const int year_days_in_cycle[5] = {384, 354, 384, 354, 354}; */
 /* static const int cycle_year_start[5] = {0, 384, 738, 1122, 1476}; */
@@ -153,15 +145,62 @@ int current_year_length(long jd)
     return (int)(next_sam - prev_sam);
 }
 
+/* Determine 5-year cycle position (1..5) anchored to ANCHOR_YEAR */
+static int cycle_year_from_celtic_year(int celtic_year)
+{
+    int offset = celtic_year - ANCHOR_YEAR;
+    int pos = (offset % 5 + 5) % 5; /* 0-4 safe */
+    return pos + 1; /* 1..5 */
+}
+
+/* Years 1 and 3 of each lustrum carry a 30-day intercalary month (Quimonios) */
+static int is_intercalary_year(int celtic_year)
+{
+    int cy = cycle_year_from_celtic_year(celtic_year);
+    return (cy == 1 || cy == 3);
+}
+
+/* Build month length table for a given Celtic year (Giamos-first ordering) */
+static int build_month_lengths(int celtic_year, int lengths[], int maxlen)
+{
+    static const int base_lengths[12] = {29, 30, 29, 29, 30, 29, 30, 29, 30, 29, 30, 30};
+    int count = 12;
+    if (maxlen < 12) return 0;
+    for (int i = 0; i < 12; i++) lengths[i] = base_lengths[i];
+    if (is_intercalary_year(celtic_year)) {
+        if (maxlen < 13) return 0;
+        lengths[12] = 30; /* Quimonios */
+        count = 13;
+    }
+    return count;
+}
+
+static int build_month_starts(int celtic_year, int starts[], int *count_out)
+{
+    int lengths[13];
+    int count = build_month_lengths(celtic_year, lengths, 13);
+    if (count == 0) return 0;
+    starts[0] = 0;
+    for (int i = 1; i < count; i++) {
+        starts[i] = starts[i-1] + lengths[i-1];
+    }
+    *count_out = count;
+    return 1;
+}
+
 /*
- * Calculate month index (0-11, or 0-12 for intercalary years)
- * For simplicity, we ignore intercalary month and use 0-11
+ * Calculate month index (0-11, or 12 for intercalary years)
  */
 int celtic_month_index(long jd)
 {
     int doy = day_of_year(jd);
-    for (int m = 11; m >= 0; m--) {
-        if (doy > month_start[m]) {
+    int starts[13];
+    int count = 0;
+    int celtic_year = celtic_year_from_jd(jd);
+    if (!build_month_starts(celtic_year, starts, &count)) return 0;
+
+    for (int m = count - 1; m >= 0; m--) {
+        if (doy > starts[m]) {
             return m;
         }
     }
@@ -172,16 +211,25 @@ int day_of_month(long jd)
 {
     int doy = day_of_year(jd);
     int month = celtic_month_index(jd);
-    return doy - month_start[month];
+    int starts[13];
+    int count = 0;
+    int celtic_year = celtic_year_from_jd(jd);
+    if (!build_month_starts(celtic_year, starts, &count)) return doy;
+    if (month >= count) month = count - 1;
+    return doy - starts[month];
 }
 
 long jd_start_of_celtic_month(int year, int month)
 {
     int samhain_year = ANCHOR_SAMHAIN_YEAR + (year - ANCHOR_YEAR);
     long jd_year_start = jd_true_samhain_for_year(samhain_year);
-    if (month > 0 && month < 12) {
-        jd_year_start += month_start[month];
-    }
+
+    int starts[13];
+    int count = 0;
+    if (!build_month_starts(year, starts, &count)) return jd_year_start;
+    if (month < 0) month = 0;
+    if (month >= count) month = count - 1;
+    jd_year_start += starts[month];
     return jd_year_start;
 }
 
@@ -220,10 +268,9 @@ const char *get_celtic_month_name(int month_index)
     static const char *months[] = {
         "Giamonios", "Simivisonnos", "Equos", "Elembivios",
         "Aedrinios", "Cantlos", "Samonios", "Dumannios",
-        "Riuros", "Anagantios", "Ogronnios", "Cutios"
+        "Riuros", "Anagantios", "Ogronnios", "Cutios", "Quimonios"
     };
-    if (month_index == -1) return "Quimonios";  /* Intercalary month */
-    if(month_index < 0 || month_index > 11) return "Unknown";
+    if(month_index < 0 || month_index > 12) return "Unknown";
     return months[month_index];
 }
 
@@ -232,10 +279,9 @@ const char *get_month_abbrev(int month_index)
 {
     static const char *abbrevs[] = {
         "GIA", "SIM", "EQU", "ELE", "AED", "CAN",
-        "SAM", "DUM", "RIV", "ANA", "OGR", "CUT"
+        "SAM", "DUM", "RIV", "ANA", "OGR", "CUT", "QUI"
     };
-    if (month_index == -1) return "QUI";  /* Intercalary month */
-    if(month_index < 0 || month_index > 11) return "???";
+    if(month_index < 0 || month_index > 12) return "???";
     return abbrevs[month_index];
 }
 
@@ -246,9 +292,9 @@ const char *get_month_abbrev(int month_index)
  */
 int is_mat_month(int month_index)
 {
-    /* MAT months in Giamos-first order: SIM, AED, SAM, RIV, OGR, CUT */
-    static const int mat[] = {0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1};
-    if(month_index < 0 || month_index > 11) return 0;
+    /* MAT months in Giamos-first order: SIM, AED, SAM, RIV, OGR, CUT (intercalary defaults MAT) */
+    static const int mat[] = {0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1};
+    if(month_index < 0 || month_index > 12) return 0;
     return mat[month_index];
 }
 
@@ -260,9 +306,9 @@ int is_mat_month(int month_index)
  */
 int get_month_days(int month_index)
 {
-    /* Authentic lengths rotated so Giamonios opens the year */
-    static const int days[] = {29, 30, 29, 29, 30, 29, 30, 29, 30, 29, 30, 30};
-    if(month_index < 0 || month_index > 11) return 30;
+    /* Authentic lengths rotated so Giamonios opens the year; Quimonios = 30 */
+    static const int days[] = {29, 30, 29, 29, 30, 29, 30, 29, 30, 29, 30, 30, 30};
+    if(month_index < 0 || month_index > 12) return 30;
     return days[month_index];
 }
 

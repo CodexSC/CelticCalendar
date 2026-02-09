@@ -98,6 +98,16 @@ static void draw_celtic_border(WINDOW *win, int height, int width, const char *t
     }
 }
 
+/* Repeating knot band to decorate headers/footers (ASCII-safe, single-width) */
+static void draw_knot_band(WINDOW *win, int y, int width)
+{
+    static const char *pattern = "*~=~*"; /* ASCII knot-like motif */
+    int pat_len = (int)strlen(pattern);
+    for (int x = 1; x < width - 1; x++) {
+        mvwaddch(win, y, x, pattern[(x - 1) % pat_len]);
+    }
+}
+
 static void draw_main_menu(WINDOW *win, int selected)
 {
     int height, width;
@@ -108,9 +118,9 @@ static void draw_main_menu(WINDOW *win, int selected)
 
     /* Celtic decorative header */
     wattron(win, COLOR_PAIR(COLOR_PAIR_BORDER) | A_BOLD);
-    mvwprintw(win, 2, (width - 30) / 2, "==============================");
-    mvwprintw(win, 3, (width - 20) / 2, "  Coligny Calendar  ");
-    mvwprintw(win, 4, (width - 30) / 2, "==============================");
+    draw_knot_band(win, 2, width - 2);
+    mvwprintw(win, 3, (width - 30) / 2, "✶  Coligny Calendar  ✶");
+    draw_knot_band(win, 4, width - 2);
     wattroff(win, COLOR_PAIR(COLOR_PAIR_BORDER) | A_BOLD);
 
     /* Menu items */
@@ -143,20 +153,25 @@ static void render_month_view(WINDOW *win, long jd_actual)
     int height, width;
     getmaxyx(win, height, width);
 
-    /* Compute Celtic context for the month being viewed and anchor "Today" to the real current date */
-    time_t t = time(NULL);
-    struct tm *local = localtime(&t);
-    double current_hour = 12.0;
-    if (local) current_hour = local->tm_hour + local->tm_min / 60.0;
+    /* For an arbitrary viewed date, use a neutral noon time so we don't spill into the next Celtic day. */
+    double view_hour = 12.0;
+    long celtic_view_jd = celtic_jd_from_time(jd_actual, view_hour, LATITUDE);
+    int after_sunset_view = is_after_sunset(jd_actual, view_hour, LATITUDE);
 
-    long today_jd = jd_today();
-    int after_sunset = is_after_sunset(today_jd, current_hour, LATITUDE);
-    long celtic_today_jd = celtic_jd_from_time(today_jd, current_hour, LATITUDE);
-
-    long celtic_view_jd = celtic_jd_from_time(jd_actual, current_hour, LATITUDE);
     int month_idx = lunar_celtic_month_index(celtic_view_jd);
     long jd_month_start = find_full_moon_before(celtic_view_jd);
     int month_days = lunar_month_length(celtic_view_jd);
+
+    /* If we landed on the full-moon day that starts a 30-day month, but the
+     * previous month was 29 days, display this day as the virtual DIVERTOMU
+     * (day 30) of the prior month. */
+    long prev_start = find_full_moon_before(jd_month_start - 1);
+    int prev_len = lunar_month_length(prev_start);
+    if (month_days == 30 && prev_len == 29 && celtic_view_jd == jd_month_start) {
+        jd_month_start = prev_start;
+        month_days = prev_len;
+        month_idx = lunar_celtic_month_index(prev_start);
+    }
 
     /* Capture CLI rendering into a buffer */
     char *buf = NULL;
@@ -175,7 +190,8 @@ static void render_month_view(WINDOW *win, long jd_actual)
 
     FILE *saved = stdout;
     stdout = mem;
-    print_celtic_month_lunar(month_idx, jd_month_start, celtic_today_jd, today_jd, month_days, after_sunset);
+    /* Render using the viewed date as the "today" anchor for this screen */
+    print_celtic_month_lunar(month_idx, jd_month_start, celtic_view_jd, jd_actual, month_days, after_sunset_view);
     fflush(mem);
     stdout = saved;
     fclose(mem);
@@ -230,8 +246,10 @@ static void render_month_view(WINDOW *win, long jd_actual)
         }
     }
 
-    /* Constrain drawing to the inside of the border */
-    int view_h = height - 3;  /* leave one interior row for the help text */
+    /* Constrain drawing to the inside of the border + decorative header/footer */
+    int header_rows = 3; /* knot band + title */
+    int help_rows = 1;   /* bottom help line */
+    int view_h = height - 2 /* borders */ - header_rows - help_rows;
     if (view_h < 1) view_h = 1;
     int view_w = width - 2;   /* interior cols */
     int top = 0;
@@ -247,16 +265,22 @@ static void render_month_view(WINDOW *win, long jd_actual)
         box(win, 0, 0);
 
         wattron(win, COLOR_PAIR(COLOR_PAIR_MENU));
-        mvwprintw(win, height - 2, 1, "↑↓ PgUp/PgDn scroll • Home/End • q/ESC back");
+           mvwprintw(win, height - 2, 1, "↑↓ PgUp/PgDn scroll • Home/End • q/ESC back");
         wattroff(win, COLOR_PAIR(COLOR_PAIR_MENU));
 
-        /* Draw border/help first, then overlay the pad so content stays visible */
-        wrefresh(win);
+           /* Decorative knot header inside the border */
+           wattron(win, COLOR_PAIR(COLOR_PAIR_BORDER) | A_BOLD);
+           draw_knot_band(win, 1, width - 2);
+           mvwprintw(win, 2, (width - 26) / 2, "Celtic Calendar");
+           wattroff(win, COLOR_PAIR(COLOR_PAIR_BORDER) | A_BOLD);
 
-        /* Render pad inside the window border; offsets keep content visible */
-        prefresh(pad, top, 0,
-             win_y + 1, win_x + 1,
-             win_y + view_h, win_x + view_w);
+           /* Draw border/help first, then overlay the pad so content stays visible */
+           wrefresh(win);
+
+           /* Render pad inside the window border; offsets keep content visible */
+           prefresh(pad, top, 0,
+               win_y + 1 + header_rows, win_x + 1,
+               win_y + header_rows + view_h, win_x + view_w);
 
         ch = wgetch(win);
         switch (ch) {

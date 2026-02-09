@@ -125,6 +125,16 @@ int main(int argc, char *argv[])
     long jd_month_start = find_full_moon_before(celtic_jd);
     int celtic_month_days = lunar_month_length(celtic_jd);
 
+    /* If this day is the full moon starting a 30-day lunation and the previous
+     * lunation was 29 days, render it as the prior month's virtual DIVERTOMU. */
+    long prev_start = find_full_moon_before(jd_month_start - 1);
+    int prev_len = lunar_month_length(prev_start);
+    if (celtic_month_days == 30 && prev_len == 29 && celtic_jd == jd_month_start) {
+        jd_month_start = prev_start;
+        celtic_month_days = prev_len;
+        month_idx = lunar_celtic_month_index(prev_start);
+    }
+
     /* Debugging: Print JD and Celtic JD */
     printf("JD: %ld | Celtic JD: %ld\n", jd, celtic_jd);
 
