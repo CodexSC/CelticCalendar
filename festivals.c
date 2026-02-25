@@ -62,6 +62,42 @@ const MultiFestival multi_festivals[] = {
 
 const int MULTI_FESTIVAL_COUNT = sizeof(multi_festivals)/sizeof(multi_festivals[0]);
 
+typedef struct {
+    int month;
+    int day;
+} NotationDay;
+
+/*
+ * SINDIV IVOS ("this day a festival") days from Coligny scholarship:
+ * DUM 2a, SIM 9, AED 25
+ * In this codebase day 2a maps to civil day 17 (day 16 = 1a).
+ */
+static const NotationDay sindiv_ivos_days[] = {
+    {7, 17}, /* DUM 2a */
+    {1, 9},  /* SIM 9 */
+    {4, 25}  /* AED 25 */
+};
+
+/*
+ * TIOCOBRIXTIO exceptional days:
+ * SIM 7, AED 8, CAN 15
+ */
+static const NotationDay tiocobrixtio_days[] = {
+    {1, 7},  /* SIM 7 */
+    {4, 8},  /* AED 8 */
+    {5, 15}  /* CAN 15 */
+};
+
+static int day_in_table(int month, int day, const NotationDay *table, int count)
+{
+    for (int i = 0; i < count; i++) {
+        if (table[i].month == month && table[i].day == day) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /*
  * Check if a given day falls within a multi-day festival
  * Returns: festival index (0-7) or -1 if not a festival day
@@ -95,4 +131,27 @@ int get_festival_day_number(int month, int day)
         }
     }
     return 0;
+}
+
+int is_sindiv_ivos_day(int month, int day)
+{
+    return day_in_table(month, day, sindiv_ivos_days,
+                        (int)(sizeof(sindiv_ivos_days) / sizeof(sindiv_ivos_days[0])));
+}
+
+int is_tiocobrixtio_day(int month, int day)
+{
+    return day_in_table(month, day, tiocobrixtio_days,
+                        (int)(sizeof(tiocobrixtio_days) / sizeof(tiocobrixtio_days[0])));
+}
+
+const char *get_exceptional_notation(int month, int day)
+{
+    if (is_tiocobrixtio_day(month, day)) {
+        return "TIOCOBRIXTIO";
+    }
+    if (is_sindiv_ivos_day(month, day)) {
+        return "SINDIV IVOS";
+    }
+    return NULL;
 }

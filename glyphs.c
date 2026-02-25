@@ -141,6 +141,10 @@ static void print_week_header(void)
 static const char* get_coligny_notation(int month_index, int day, int is_atenoux_half)
 {
     int mat = is_mat_month(month_index);
+    const char *exceptional = get_exceptional_notation(month_index, day);
+    if (exceptional) {
+        return exceptional;
+    }
 
     /* Days 7-8-9 in first half = PRINNI LOUD/LAG (full moon triplet) */
     if (!is_atenoux_half && day >= 7 && day <= 9) {
@@ -179,6 +183,15 @@ static const char* get_triple_mark(int day)
         }
     }
     return "   ";  /* No mark for days 4-6 of each cycle */
+}
+
+static void format_coligny_day_label(int day, char *buf, size_t buf_size)
+{
+    if (day > 15) {
+        snprintf(buf, buf_size, "%da", day - 15);
+    } else {
+        snprintf(buf, buf_size, "%d", day);
+    }
 }
 
 static char day_marker(int month_index, int day_of_month)
@@ -228,6 +241,12 @@ static void print_coligny_tablet(int month_index, int today_day, int mat, long j
     if (is_festival_day(month_index, today_day, jd_today)) {
         printf("║  [IVOS - Festival Day]                           ║\n");
     }
+    if (is_sindiv_ivos_day(month_index, today_day)) {
+        printf("║  [SINDIV IVOS - Exceptional Festival Day]        ║\n");
+    }
+    if (is_tiocobrixtio_day(month_index, today_day)) {
+        printf("║  [TIOCOBRIXTIO - Exceptional Notation]           ║\n");
+    }
 
     printf("╚══════════════════════════════════════════════════╝\n");
 
@@ -243,6 +262,8 @@ static void print_coligny_tablet(int month_index, int today_day, int mat, long j
     printf("│ ⚠ = IVOS D AMB - Festival + Inauspicious         │\n");
     printf("│ [] = Today marker inside the grid                │\n");
     printf("│ N INIS R = Dark moon night (days 22-24)          │\n");
+    printf("│ SINDIV IVOS = This day a festival (special)      │\n");
+    printf("│ TIOCOBRIXTIO = Exceptional notation day          │\n");
     printf("│ PRINNI LOUD/LAG = Full moon marker               │\n");
     printf("│ ƚıı ıƚı ııƚ = Triple marks (daytime divisions)   │\n");
     printf("│ DIVERTOMU = Virtual 30th day (29-day months)     │\n");
@@ -343,6 +364,9 @@ static int is_festival_day(int month_index, int day, long jd)
         if (festivals[f].month == month_index && festivals[f].day == day) {
             return 1;
         }
+    }
+    if (is_sindiv_ivos_day(month_index, day)) {
+        return 1;
     }
 
     int yule = days_to_yule(jd); int ostara = days_to_ostara(jd);
@@ -458,6 +482,25 @@ void print_celtic_month(int month_index, long jd_start, long jd_today)
         info_line(line);
         has_festival = 1;
     }
+
+    char day_label[16];
+    for (int day = 1; day <= month_days; day++) {
+        if (is_sindiv_ivos_day(month_index, day)) {
+            format_coligny_day_label(day, day_label, sizeof(day_label));
+            snprintf(line, sizeof(line), "  SINDIV IVOS: %-20s Day %2d (%s)",
+                     get_celtic_month_name(month_index), day, day_label);
+            info_line(line);
+            has_festival = 1;
+        }
+        if (is_tiocobrixtio_day(month_index, day)) {
+            format_coligny_day_label(day, day_label, sizeof(day_label));
+            snprintf(line, sizeof(line), "  TIOCOBRIXTIO: %-17s Day %2d (%s)",
+                     get_celtic_month_name(month_index), day, day_label);
+            info_line(line);
+            has_festival = 1;
+        }
+    }
+
     if (!has_festival) info_line("  (No major festivals this month)");
     info_border("└", "┘");
 
@@ -467,6 +510,8 @@ void print_celtic_month(int month_index, long jd_start, long jd_today)
     info_line("  ☆ = IVOS + Auspicious");
     info_line("  ⚐ = IVOS + Neutral");
     info_line("  ⚠ = IVOS + Inauspicious");
+    info_line("  SINDIV IVOS = Exceptional festival day");
+    info_line("  TIOCOBRIXTIO = Exceptional notation day");
     info_line("  [] = Today (grid marker)");
     info_border("└", "┘");
     printf("\n");
@@ -580,6 +625,25 @@ void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, lo
         info_line(line);
         has_festival = 1;
     }
+
+    char day_label[16];
+    for (int day = 1; day <= month_days; day++) {
+        if (is_sindiv_ivos_day(month_index, day)) {
+            format_coligny_day_label(day, day_label, sizeof(day_label));
+            snprintf(line, sizeof(line), "  SINDIV IVOS: %-20s Day %2d (%s)",
+                     get_celtic_month_name(month_index), day, day_label);
+            info_line(line);
+            has_festival = 1;
+        }
+        if (is_tiocobrixtio_day(month_index, day)) {
+            format_coligny_day_label(day, day_label, sizeof(day_label));
+            snprintf(line, sizeof(line), "  TIOCOBRIXTIO: %-17s Day %2d (%s)",
+                     get_celtic_month_name(month_index), day, day_label);
+            info_line(line);
+            has_festival = 1;
+        }
+    }
+
     if (!has_festival) info_line("  (No major festivals this month)");
     info_border("└", "┘");
     printf("\n");
