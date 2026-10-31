@@ -15,8 +15,6 @@ test_*.c
 !tests/test_calendar.c
 debug_*.c
 fix_epoch.c
-data.c
-data.h
 
 # Beta version
 beta Version/
