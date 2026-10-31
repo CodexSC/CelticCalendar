@@ -147,14 +147,28 @@ static void draw_main_menu(WINDOW *win, int selected)
     wrefresh(win);
 }
 
+/* Today's date in local solar time at Coligny (same clock as the CLI) */
+static long solar_today(void)
+{
+    long jd;
+    double hour;
+    solar_time_now(&jd, &hour);
+    return jd;
+}
+
 /* Render the rich text month view (same as CLI) into the ncurses window */
 static void render_month_view(WINDOW *win, long jd_actual)
 {
     int height, width;
     getmaxyx(win, height, width);
 
-    /* For an arbitrary viewed date, use a neutral noon time so we don't spill into the next Celtic day. */
+    /* Today follows the real hour (the Celtic day begins at sunset); any other
+     * viewed date uses a neutral noon so it doesn't spill into the next day. */
     double view_hour = 12.0;
+    long now_jd;
+    double now_hour;
+    solar_time_now(&now_jd, &now_hour);
+    if (jd_actual == now_jd) view_hour = now_hour;
     long celtic_view_jd = celtic_jd_from_time(jd_actual, view_hour, LATITUDE);
     int after_sunset_view = is_after_sunset(jd_actual, view_hour, LATITUDE);
 
@@ -400,7 +414,7 @@ void run_interactive_ui(void)
 
     int selected = 0;
     int running = 1;
-    long current_jd = jd_today();
+    long current_jd = solar_today();
 
     /* Clear screen and refresh */
     clear();
@@ -448,7 +462,7 @@ void run_interactive_ui(void)
                 timeout(-1);  /* Make operations blocking */
                 switch (selected) {
                     case MENU_TODAY:
-                        current_jd = jd_today();
+                        current_jd = solar_today();
                         display_calendar_view(main_win, current_jd);
                         break;
 

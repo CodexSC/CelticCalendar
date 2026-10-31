@@ -12,7 +12,6 @@
 
 /* Default location: Coligny, France (where the calendar was found) */
 #define LATITUDE 46.38
-#define LONGITUDE 5.35
 /* Match the width of month grids (71 chars including borders) */
 #define BOX_WIDTH 71
 
@@ -98,19 +97,12 @@ int main(int argc, char *argv[])
         local_time.tm_min = 0;
         local = &local_time;
     } else {
-        /* Use current date/time. Sunset is computed in local solar time at
-         * Coligny, so derive the date and hour from UTC + longitude rather
-         * than from the wall clock (which is offset by time zone and DST). */
+        /* Use current date/time in local solar time at Coligny, the clock in
+         * which sunset is computed; the wall clock is kept for display only. */
         time_t t = time(NULL);
         local_time = *localtime(&t);
         local = &local_time;
-        struct tm utc = *gmtime(&t);
-        jd = jd_from_ymd(utc.tm_year + 1900, utc.tm_mon + 1, utc.tm_mday);
-        current_hour = utc.tm_hour + utc.tm_min / 60.0 + LONGITUDE / 15.0;
-        if (current_hour >= 24.0) {
-            current_hour -= 24.0;
-            jd++;
-        }
+        solar_time_now(&jd, &current_hour);
     }
 
     /* Calculate sunset time */

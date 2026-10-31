@@ -18,6 +18,7 @@ int lunar_celtic_month_index(long jd);        /* Month by lunation count */
 double calculate_sunset(long jd, double latitude);
 int is_after_sunset(long jd, double current_hour, double latitude);
 long celtic_jd_from_time(long jd, double current_hour, double latitude);
+void solar_time_now(long *jd, double *hour);   /* now, in local solar time at Coligny */
 void get_sunset_time_str(long jd, double latitude, char *buffer, int buf_size);
 
 /* Metonic Cycle (19-year lunisolar synchronization) */

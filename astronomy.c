@@ -2,6 +2,7 @@
 #include "calendar.h"
 #include <math.h>
 #include <stdio.h>
+#include <time.h>
 
 #define PI 3.14159265358979323846
 #define DEG (PI / 180.0)
@@ -406,10 +407,14 @@ double calculate_sunset(long jd, double latitude)
     /* Hour angle in hours */
     double H = acos(cos_H) * 180.0 / PI / 15.0;
 
-    /* Sunset time = solar noon + hour angle */
-    /* Solar noon is approximately 12:00 local solar time */
-    double sunset_hour = 12.0 + H;
+    /* Equation of time: the true Sun runs up to ~16 minutes ahead of or
+     * behind the mean Sun, so solar noon is not exactly 12:00 */
+    double alpha = atan2(cos(epsilon_rad) * sin(lambda_rad), cos(lambda_rad)) * 180.0 / PI;
+    double eot_deg = fmod(L - alpha + 540.0, 360.0) - 180.0;   /* -180..180 */
+    double solar_noon = 12.0 - eot_deg / 15.0;
 
+    /* Sunset time = solar noon + hour angle (local mean solar time) */
+    double sunset_hour = solar_noon + H;
 
     return sunset_hour;
 }
@@ -434,6 +439,22 @@ long celtic_jd_from_time(long jd, double current_hour, double latitude)
         return jd + 1;  /* After sunset = next Celtic day */
     }
     return jd;
+}
+
+/*
+ * Current date and hour in local mean solar time at Coligny, the clock in
+ * which sunset is computed (UTC + longitude; independent of time zone/DST)
+ */
+void solar_time_now(long *jd, double *hour)
+{
+    time_t t = time(NULL);
+    struct tm utc = *gmtime(&t);
+    *jd = jd_from_ymd(utc.tm_year + 1900, utc.tm_mon + 1, utc.tm_mday);
+    *hour = utc.tm_hour + utc.tm_min / 60.0 + DEFAULT_LONGITUDE / 15.0;
+    if (*hour >= 24.0) {
+        *hour -= 24.0;
+        (*jd)++;
+    }
 }
 
 /*
