@@ -14,42 +14,32 @@
  * Epoch: Aligned with Kali Yuga (Vedic Tradition)
  * Kali Yuga began February 17/18, 3102 BCE (JD 588465.5)
  * Celtic Year 1 = Samhain 3102 BCE (approximately Nov 3102 BCE)
- * We anchor Year 5127 to Nov 1, 2025 (JD 2460981)
+ * We anchor Year 5127 to Samonios 2025 (starting 2025-10-26)
  * This aligns Celtic Year 1 with Kali Yuga Year 1
+ *
+ * Here the intercalation follows the sky rather than a fixed lustrum:
+ * each year begins with Samonios, the month in which the Sun reaches 225°
+ * (Samhain), on its sixth day of the moon (Pliny), so a year holds 12 or
+ * 13 lunations (354 or 384 days) as observation dictates.
  */
 
-#define ANCHOR_YEAR 5127        /* Celtic Year 5127 starts at Samhain of 2025 */
-#define ANCHOR_SAMHAIN_YEAR 2025/* Gregorian year whose Samhain anchors the Celtic year */
+#define ANCHOR_YEAR 5127        /* Celtic Year 5127 starts at Samonios of 2025 */
+#define ANCHOR_SAMHAIN_YEAR 2025/* Gregorian year whose Samonios anchors the Celtic year */
 
-#define AGE_YEARS 31            /* Years per Age (Saturnian cycle) */
+/*
+ * Age (saeculum) length: the Saturnian cycle
+ * Pliny (Natural History 16.95) gives the Druids' ages as "thirty". Read as
+ * thirty returns of Saturn to opposition (synodic period 378.09 days):
+ *   30 x 378.09 = 11342.8 days = 31.06 tropical years (= 384.1 lunations)
+ * so an Age spans 31 years. The alternative reading, 30 tropical years,
+ * rests on 30 years = 371.05 lunations (a near-exact lunisolar fit).
+ */
+#define AGE_YEARS 31            /* Years per Age (30 Saturn oppositions) */
 #define AGE_OFFSET (-16)        /* Offset to align age calculation */
 
 /* Legacy cycle constants retained for documentation (unused) */
 /* static const int year_days_in_cycle[5] = {384, 354, 384, 354, 354}; */
 /* static const int cycle_year_start[5] = {0, 384, 738, 1122, 1476}; */
-
-/* Target solar longitude for Samhain */
-#define SAMHAIN_LONG 225.0
-
-/* Find the JD of Samhain (Sun ≈ 225°) for a given Gregorian year */
-static long jd_true_samhain_for_year(int greg_year)
-{
-    long start = jd_from_ymd(greg_year, 10, 15); /* search window Oct 15 */
-    double best_diff = 1e9;
-    long best_jd = start;
-    for (int d = 0; d <= 60; d++) {
-        long jd = start + d;
-        double diff = sun_longitude(jd) - SAMHAIN_LONG;
-        if (diff > 180.0) diff -= 360.0;
-        if (diff < -180.0) diff += 360.0;
-        double ad = (diff < 0) ? -diff : diff;
-        if (ad < best_diff) {
-            best_diff = ad;
-            best_jd = jd;
-        }
-    }
-    return best_jd;
-}
 
 /* Convert JD to Gregorian year (rough, good enough for selecting Samhain year) */
 static int gregorian_year_from_jd(long jd)
@@ -64,19 +54,19 @@ static int gregorian_year_from_jd(long jd)
     return greg_year;
 }
 
-/* Get Samhain boundaries around a JD (solar Samhain ≈ 225°) */
+/* Get the solilunar year boundaries around a JD: the Samonios starts before and after it */
 static void samhain_bounds(long jd, long *prev_sam, long *next_sam, int *prev_sam_year)
 {
     int gy = gregorian_year_from_jd(jd);
-    long this_sam = jd_true_samhain_for_year(gy);
+    long this_sam = find_samonios_start(gy);
     if (jd < this_sam) {
         *prev_sam_year = gy - 1;
-        *prev_sam = jd_true_samhain_for_year(gy - 1);
+        *prev_sam = find_samonios_start(gy - 1);
         *next_sam = this_sam;
     } else {
         *prev_sam_year = gy;
         *prev_sam = this_sam;
-        *next_sam = jd_true_samhain_for_year(gy + 1);
+        *next_sam = find_samonios_start(gy + 1);
     }
 }
 
@@ -99,7 +89,7 @@ long jd_today(void)
 
 /*
  * Calculate Celtic year from Julian Day
- * Uses the 5-year cycle for precision
+ * The year runs from one Samonios start to the next (solilunar)
  */
 int celtic_year_from_jd(long jd)
 {
@@ -222,7 +212,7 @@ int day_of_month(long jd)
 long jd_start_of_celtic_month(int year, int month)
 {
     int samhain_year = ANCHOR_SAMHAIN_YEAR + (year - ANCHOR_YEAR);
-    long jd_year_start = jd_true_samhain_for_year(samhain_year);
+    long jd_year_start = find_samonios_start(samhain_year);
 
     int starts[13];
     int count = 0;
@@ -239,7 +229,7 @@ long jd_start_of_celtic_month(int year, int month)
 long jd_start_of_celtic_year(int year)
 {
     int samhain_year = ANCHOR_SAMHAIN_YEAR + (year - ANCHOR_YEAR);
-    return jd_true_samhain_for_year(samhain_year);
+    return find_samonios_start(samhain_year);
 }
 
 double elapsed_fraction(long jd)

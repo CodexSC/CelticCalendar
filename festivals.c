@@ -1,4 +1,5 @@
 #include "festivals.h"
+#include <stddef.h>
 
 /*
  * Celtic Calendar Festivals for Year 5289 (Nov 2025 - Oct 2026)

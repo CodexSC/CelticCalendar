@@ -159,13 +159,13 @@ static void render_month_view(WINDOW *win, long jd_actual)
     int after_sunset_view = is_after_sunset(jd_actual, view_hour, LATITUDE);
 
     int month_idx = lunar_celtic_month_index(celtic_view_jd);
-    long jd_month_start = find_full_moon_before(celtic_view_jd);
+    long jd_month_start = find_lunar_month_start(celtic_view_jd);
     int month_days = lunar_month_length(celtic_view_jd);
 
-    /* If we landed on the full-moon day that starts a 30-day month, but the
+    /* If we landed on the first day of a 30-day month, but the
      * previous month was 29 days, display this day as the virtual DIVERTOMU
      * (day 30) of the prior month. */
-    long prev_start = find_full_moon_before(jd_month_start - 1);
+    long prev_start = find_lunar_month_start(jd_month_start - 1);
     int prev_len = lunar_month_length(prev_start);
     if (month_days == 30 && prev_len == 29 && celtic_view_jd == jd_month_start) {
         jd_month_start = prev_start;
@@ -460,7 +460,7 @@ void run_interactive_ui(void)
                         {
                             /* Align navigation with the lunar month rendering used in this UI. */
                             long celtic_jd = celtic_jd_from_time(current_jd, 12.0, LATITUDE);
-                            long month_start = find_full_moon_before(celtic_jd);
+                            long month_start = find_lunar_month_start(celtic_jd);
                             int month_len = lunar_month_length(celtic_jd);
                             current_jd = month_start + month_len + 1; /* jump to start of next lunar month */
                         }
@@ -470,8 +470,8 @@ void run_interactive_ui(void)
                     case MENU_PREV_MONTH:
                         {
                             long celtic_jd = celtic_jd_from_time(current_jd, 12.0, LATITUDE);
-                            long month_start = find_full_moon_before(celtic_jd);
-                            /* Step to just before this month's full moon, then rendering will pick the prior month. */
+                            long month_start = find_lunar_month_start(celtic_jd);
+                            /* Step to just before this month's first day, then rendering will pick the prior month. */
                             current_jd = month_start - 1;
                         }
                         display_calendar_view(main_win, current_jd);

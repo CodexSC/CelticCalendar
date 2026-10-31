@@ -8,6 +8,7 @@ double sun_longitude(long jd);  /* Ecliptic longitude in degrees */
 
 /* Lunar-synced Celtic month functions */
 long find_full_moon_before(long jd);
+long find_lunar_month_start(long jd);         /* Day 1: sixth day of the moon (Pliny) */
 int lunar_day_of_month(long jd);
 int lunar_month_length(long jd);
 long find_samonios_start(int greg_year);      /* Full moon near Samhain */

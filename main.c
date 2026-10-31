@@ -12,6 +12,7 @@
 
 /* Default location: Coligny, France (where the calendar was found) */
 #define LATITUDE 46.38
+#define LONGITUDE 5.35
 /* Match the width of month grids (71 chars including borders) */
 #define BOX_WIDTH 71
 
@@ -97,11 +98,19 @@ int main(int argc, char *argv[])
         local_time.tm_min = 0;
         local = &local_time;
     } else {
-        /* Use current date/time */
-        jd = jd_today();
+        /* Use current date/time. Sunset is computed in local solar time at
+         * Coligny, so derive the date and hour from UTC + longitude rather
+         * than from the wall clock (which is offset by time zone and DST). */
         time_t t = time(NULL);
-        local = localtime(&t);
-        current_hour = local->tm_hour + local->tm_min / 60.0;
+        local_time = *localtime(&t);
+        local = &local_time;
+        struct tm utc = *gmtime(&t);
+        jd = jd_from_ymd(utc.tm_year + 1900, utc.tm_mon + 1, utc.tm_mday);
+        current_hour = utc.tm_hour + utc.tm_min / 60.0 + LONGITUDE / 15.0;
+        if (current_hour >= 24.0) {
+            current_hour -= 24.0;
+            jd++;
+        }
     }
 
     /* Calculate sunset time */
@@ -120,14 +129,14 @@ int main(int argc, char *argv[])
     age_and_year_in_age(celtic_jd, &age, &year_in_age);
 
     /* Use TRUE lunar-synced month calculation */
-    /* Month starts at full moon, ATENOUX at new moon */
+    /* Months begin on the sixth day of the moon (Pliny); full moon ~day 10-11 */
     int month_idx = lunar_celtic_month_index(celtic_jd);
-    long jd_month_start = find_full_moon_before(celtic_jd);
+    long jd_month_start = find_lunar_month_start(celtic_jd);
     int celtic_month_days = lunar_month_length(celtic_jd);
 
-    /* If this day is the full moon starting a 30-day lunation and the previous
+    /* If this day is the first day of a 30-day lunation and the previous
      * lunation was 29 days, render it as the prior month's virtual DIVERTOMU. */
-    long prev_start = find_full_moon_before(jd_month_start - 1);
+    long prev_start = find_lunar_month_start(jd_month_start - 1);
     int prev_len = lunar_month_length(prev_start);
     if (celtic_month_days == 30 && prev_len == 29 && celtic_jd == jd_month_start) {
         jd_month_start = prev_start;

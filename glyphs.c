@@ -146,13 +146,13 @@ static const char* get_coligny_notation(int month_index, int day, int is_atenoux
         return exceptional;
     }
 
-    /* Days 7-8-9 in first half = PRINNI LOUD/LAG (full moon triplet) */
+    /* Days 7-8-9 in first half = PRINNI LOUD/LAG (tablet triplet, waxing moon) */
     if (!is_atenoux_half && day >= 7 && day <= 9) {
         if (day == 7) return mat ? "PRINNI LOUD" : "PRINNI LAG";
         return mat ? "M D" : "D";
     }
 
-    /* Days 22-23-24 in ATENOUX = N INIS R (dark moon nights) */
+    /* Days 22-23-24 in ATENOUX = N INIS R (moonless nights before the new moon) */
     if (is_atenoux_half && day >= 22 && day <= 24) {
         return "N INIS R";
     }
@@ -230,11 +230,11 @@ static void print_coligny_tablet(int month_index, int today_day, int mat, long j
            notation);
 
     if (today_day >= 7 && today_day <= 9 && !is_second_half) {
-        printf("║  [PRINNI %s - Full Moon Triplet]               ║\n",
+        printf("║  [PRINNI %s - Tablet Triplet, Waxing Moon]     ║\n",
                mat ? "LOUD" : "LAG ");
     }
     if (is_second_half && today_day >= 22 && today_day <= 24) {
-        printf("║  [N INIS R - Dark Moon Night]                   ║\n");
+        printf("║  [N INIS R - Dark Moon Night]                    ║\n");
     }
 
     long jd_today = jd_start + today_day - 1;
@@ -264,7 +264,7 @@ static void print_coligny_tablet(int month_index, int today_day, int mat, long j
     printf("│ N INIS R = Dark moon night (days 22-24)          │\n");
     printf("│ SINDIV IVOS = This day a festival (special)      │\n");
     printf("│ TIOCOBRIXTIO = Exceptional notation day          │\n");
-    printf("│ PRINNI LOUD/LAG = Full moon marker               │\n");
+    printf("│ PRINNI LOUD/LAG = Tablet triplet (days 7-9)      │\n");
     printf("│ ƚıı ıƚı ııƚ = Triple marks (daytime divisions)   │\n");
     printf("│ DIVERTOMU = Virtual 30th day (29-day months)     │\n");
     printf("└──────────────────────────────────────────────────┘\n");
@@ -385,7 +385,6 @@ static int is_festival_day(int month_index, int day, long jd)
 
 static void print_grid_half(int month_index, long jd_start, int start_day, int end_day, int today_day)
 {
-    int month_days_here = lunar_month_length(jd_start);
     long jd_of_start = jd_start + start_day - 1;
     int weekday_of_start = (int)((jd_of_start + 1) % 7);
 
@@ -405,14 +404,6 @@ static void print_grid_half(int month_index, long jd_start, int start_day, int e
         }
 
         int mp = moon_phase(jd);
-        /* For the virtual DIVERTOMU day (30th of a 29-day month), avoid showing
-         * the new full moon of the next lunation. Use the previous day's phase
-         * so the virtual day doesn't duplicate the coming full moon. */
-        if (month_days_here == 29 && day == 30) {
-            /* Force virtual day to a gibbous look to avoid duplicating the next full. */
-            mp = moon_phase(jd - 1);
-            if (mp == 4) mp = 3;
-        }
         char marker = day_marker(month_index, day);
         int festival = is_festival_day(month_index, day, jd);
 
@@ -518,7 +509,7 @@ void print_celtic_month(int month_index, long jd_start, long jd_today)
 
     print_border("┌","┬","┐");
     grid_span_center("FIRST COICISE (Days I - XV)");
-    grid_span_center("🌕 Full Moon → 🌑 New Moon");
+    grid_span_center("🌒 Waxing → 🌕 Full Moon → 🌖 Waning");
     print_border("├","┼","┤");
     print_week_header();
     print_border("├","┼","┤");
@@ -531,7 +522,7 @@ void print_celtic_month(int month_index, long jd_start, long jd_today)
     print_border("└","┴","┘");
     printf("\n");
 
-    printf("        ════════ ATENOUX (🌑) ════════\n");
+    printf("        ════════ ATENOUX (🌖) ════════\n");
     printf("           \"Returning Night\"\n\n");
 
     print_border("┌","┬","┐");
@@ -539,7 +530,7 @@ void print_celtic_month(int month_index, long jd_start, long jd_today)
         grid_span_center("SECOND COICISE (Days XVI - XXX)");
     else
         grid_span_center("SECOND COICISE (Days XVI - XXIX)");
-    grid_span_center("🌑 New Moon → 🌕 Full Moon");
+    grid_span_center("🌗 Waning → 🌑 New Moon → 🌒 Waxing");
     print_border("├","┼","┤");
     print_week_header();
     print_border("├","┼","┤");
@@ -558,6 +549,17 @@ void print_celtic_month(int month_index, long jd_start, long jd_today)
     print_coligny_tablet(month_index, today_day, mat, jd_start);
 }
 
+/* " (today)", " (in N days)" or " (N days ago)" for a day of the month; empty when today is outside it */
+static void format_relative_day(int day, int today_day, char *buf, size_t size)
+{
+    if (today_day == 0)            buf[0] = '\0';
+    else if (day == today_day)     snprintf(buf, size, " (today)");
+    else if (day == today_day + 1) snprintf(buf, size, " (tomorrow)");
+    else if (day > today_day)      snprintf(buf, size, " (in %d days)", day - today_day);
+    else if (day == today_day - 1) snprintf(buf, size, " (yesterday)");
+    else                           snprintf(buf, size, " (%d days ago)", today_day - day);
+}
+
 void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, long jd_actual, int month_days, int after_sunset)
 {
     int today_day_raw = (int)(jd_celtic - jd_start) + 1;
@@ -565,10 +567,11 @@ void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, lo
                    (month_days == 29 && today_day_raw == 30); /* allow virtual DIVERTOMU */
     int today_day = in_month ? today_day_raw : 0; /* use 0 to keep the panel present even when outside */
     int celtic_weekday = (int)((jd_celtic + 1) % 7);
-    int today_moon = moon_phase(jd_actual);
+    int today_moon = moon_phase(jd_celtic);  /* same Celtic day as the grid marker */
     int today_moon_zodiac = moon_sign(jd_actual);
     int today_sun_zodiac = sun_sign(jd_actual);
-    int mat = (month_days == 30);
+    int mat = is_mat_month(month_index);     /* MAT/ANM belongs to the month, as on the tablet */
+    int tablet_days = get_month_days(month_index);
     char line[160];
 
     (void)after_sunset; /* unused in condensed today panel */
@@ -578,9 +581,15 @@ void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, lo
              get_celtic_month_name(month_index),
              get_month_abbrev(month_index));
     info_line(line);
-    snprintf(line, sizeof(line), "  %-36s - %2d days",
-             mat ? "Matis (lucky/complete month)" : "Anmatu (unlucky/incomplete month)",
-             month_days);
+    if (tablet_days == month_days) {
+        snprintf(line, sizeof(line), "  %-36s - %2d days",
+                 mat ? "Matis (lucky/complete month)" : "Anmatu (unlucky/incomplete month)",
+                 tablet_days);
+    } else {
+        snprintf(line, sizeof(line), "  %-36s - %2d days (lunation %d)",
+                 mat ? "Matis (lucky/complete month)" : "Anmatu (unlucky/incomplete month)",
+                 tablet_days, month_days);
+    }
     info_line(line);
     info_border("└", "┘");
 
@@ -601,10 +610,13 @@ void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, lo
     }
 
     info_border("┌", "┐");
+    info_line("  FESTIVALS THIS MONTH");
+    char when[24];
     int has_festival = 0;
     for (int f = 0; f < FESTIVAL_COUNT; f++) {
         if (festivals[f].month == month_index) {
-            snprintf(line, sizeof(line), "  IVOS: %-33s Day %2d", festivals[f].name, festivals[f].day);
+            format_relative_day(festivals[f].day, today_day, when, sizeof(when));
+            snprintf(line, sizeof(line), "  IVOS: %-33s Day %2d%s", festivals[f].name, festivals[f].day, when);
             info_line(line);
             has_festival = 1;
         }
@@ -615,12 +627,13 @@ void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, lo
         int celtic_day = solar_events[i].offset + 1;
         int solilunar = (strstr(solar_events[i].name, "Imbolc") != NULL) &&
                         is_solilunar_alignment(jd_start, solar_events[i].offset);
+        format_relative_day(celtic_day, today_day, when, sizeof(when));
         if (solilunar) {
-            snprintf(line, sizeof(line), "  IVOS: %-20s %s Day %2d [solilunar]",
-                     solar_events[i].name, get_celtic_month_name(month_index), celtic_day);
+            snprintf(line, sizeof(line), "  IVOS: %-20s %s Day %2d%s [solilunar]",
+                     solar_events[i].name, get_celtic_month_name(month_index), celtic_day, when);
         } else {
-            snprintf(line, sizeof(line), "  IVOS: %-20s %s Day %2d",
-                     solar_events[i].name, get_celtic_month_name(month_index), celtic_day);
+            snprintf(line, sizeof(line), "  IVOS: %-20s %s Day %2d%s",
+                     solar_events[i].name, get_celtic_month_name(month_index), celtic_day, when);
         }
         info_line(line);
         has_festival = 1;
@@ -630,15 +643,17 @@ void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, lo
     for (int day = 1; day <= month_days; day++) {
         if (is_sindiv_ivos_day(month_index, day)) {
             format_coligny_day_label(day, day_label, sizeof(day_label));
-            snprintf(line, sizeof(line), "  SINDIV IVOS: %-20s Day %2d (%s)",
-                     get_celtic_month_name(month_index), day, day_label);
+            format_relative_day(day, today_day, when, sizeof(when));
+            snprintf(line, sizeof(line), "  SINDIV IVOS: %-20s Day %2d (%s)%s",
+                     get_celtic_month_name(month_index), day, day_label, when);
             info_line(line);
             has_festival = 1;
         }
         if (is_tiocobrixtio_day(month_index, day)) {
             format_coligny_day_label(day, day_label, sizeof(day_label));
-            snprintf(line, sizeof(line), "  TIOCOBRIXTIO: %-17s Day %2d (%s)",
-                     get_celtic_month_name(month_index), day, day_label);
+            format_relative_day(day, today_day, when, sizeof(when));
+            snprintf(line, sizeof(line), "  TIOCOBRIXTIO: %-17s Day %2d (%s)%s",
+                     get_celtic_month_name(month_index), day, day_label, when);
             info_line(line);
             has_festival = 1;
         }
@@ -650,7 +665,7 @@ void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, lo
 
     print_border("┌","┬","┐");
     grid_span_center("FIRST COICISE (Days I - XV)");
-    grid_span_center("🌕 Full Moon → 🌑 New Moon");
+    grid_span_center("🌒 Waxing → 🌕 Full Moon → 🌖 Waning");
     print_border("├","┼","┤");
     print_week_header();
     print_border("├","┼","┤");
@@ -662,7 +677,7 @@ void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, lo
     print_border("└","┴","┘");
     printf("\n");
 
-    printf("        ════════ ATENOUX (🌑) ════════\n");
+    printf("        ════════ ATENOUX (🌖) ════════\n");
     printf("           \"Returning Night\"\n\n");
 
     print_border("┌","┬","┐");
@@ -670,7 +685,7 @@ void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, lo
         grid_span_center("SECOND COICISE (Days XVI - XXX)");
     else
         grid_span_center("SECOND COICISE (Days XVI - XXIX)");
-    grid_span_center("🌑 New Moon → 🌕 Full Moon");
+    grid_span_center("🌗 Waning → 🌑 New Moon → 🌒 Waxing");
     print_border("├","┼","┤");
     print_week_header();
     print_border("├","┼","┤");

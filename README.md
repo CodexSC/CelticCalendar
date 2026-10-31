@@ -124,11 +124,9 @@ gcc -Wall -O2 main_interactive.c ui_ncurses.c glyphs.c data.c astronomy.c festiv
 gcc -Wall -O2 main.c astronomy.c calendar.c data.c festivals.c glyphs.c -lm -o celtic_calendar
 ./celtic_calendar
 
-# Test utilities:
-gcc -o test_astro test_astro.c astronomy.c
-gcc -o test_dates test_dates.c calendar.c data.c
-./test_astro
-./test_dates
+# Check the calendar still matches the sky (moon phases, Pliny's sixth day, Samhain in Samonios):
+gcc -Wall -I. -o test_calendar tests/test_calendar.c astronomy.c calendar.c -lm
+./test_calendar
 ```
 
 ---
