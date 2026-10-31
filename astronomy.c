@@ -291,7 +291,7 @@ long find_samonios_start(int greg_year)
 }
 
 /*
- * Get the lunar Celtic month index (0-11 or 12 for intercalary)
+ * Get the lunar Celtic month index (0-11, or 12/13 for the intercalary months)
  * Based on counting lunations from Samonios start (full moon near Samhain)
  */
 int lunar_celtic_month_index(long jd)
@@ -331,6 +331,21 @@ int lunar_celtic_month_index(long jd)
         jd_check = find_lunar_month_start(jd_check + 32);  /* Jump to next month start */
         month_count++;
         if (month_count > 13) break;  /* Safety limit */
+    }
+
+    /* Giamonios is the month in which the Sun reaches 45° (Beltane), as
+     * Samonios is the month of 225°. When it comes seven months after
+     * Samonios, the extra month (Rantaranos) precedes it; otherwise a
+     * 13-month year ends with Quimonios, before the next Samonios. */
+    long jd_beltane = jd_samonios + 160;
+    while (days_to_true_beltane(jd_beltane) > 0) jd_beltane++;
+    long jd_giamonios = find_lunar_month_start(jd_beltane);
+    int giamonios_count = 0;
+    for (jd_check = jd_samonios; jd_check < jd_giamonios; giamonios_count++)
+        jd_check = find_lunar_month_start(jd_check + 32);
+    if (giamonios_count == 7) {
+        if (month_count == 6) return 13;     /* intercalary (Rantaranos) */
+        if (month_count > 6) month_count--;
     }
 
     /* Patch: shift so 0 = Giamonios, not Samonios */

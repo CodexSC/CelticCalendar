@@ -258,9 +258,14 @@ const char *get_celtic_month_name(int month_index)
     static const char *months[] = {
         "Giamonios", "Simivisonnos", "Equos", "Elembivios",
         "Aedrinios", "Cantlos", "Samonios", "Dumannios",
-        "Riuros", "Anagantios", "Ogronnios", "Cutios", "Quimonios"
+        "Riuros", "Anagantios", "Ogronnios", "Cutios", "Quimonios",
+        "Rantaranos"
     };
-    if(month_index < 0 || month_index > 12) return "Unknown";
+    /* Intercalary months (names only partly legible on the tablet):
+     * 12 = Quimonios (QVIMON...), before Samonios
+     * 13 = Rantaranos (...ANTARAN..., initial B/R/S uncertain; Lambert reads
+     *      Ciallos bis Sonnocingos), before Giamonios */
+    if(month_index < 0 || month_index > 13) return "Unknown";
     return months[month_index];
 }
 
@@ -269,9 +274,9 @@ const char *get_month_abbrev(int month_index)
 {
     static const char *abbrevs[] = {
         "GIA", "SIM", "EQU", "ELE", "AED", "CAN",
-        "SAM", "DUM", "RIV", "ANA", "OGR", "CUT", "QUI"
+        "SAM", "DUM", "RIV", "ANA", "OGR", "CUT", "QUI", "RAN"
     };
-    if(month_index < 0 || month_index > 12) return "???";
+    if(month_index < 0 || month_index > 13) return "???";
     return abbrevs[month_index];
 }
 
@@ -283,8 +288,8 @@ const char *get_month_abbrev(int month_index)
 int is_mat_month(int month_index)
 {
     /* MAT months in Giamos-first order: SIM, AED, SAM, RIV, OGR, CUT (intercalary defaults MAT) */
-    static const int mat[] = {0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1};
-    if(month_index < 0 || month_index > 12) return 0;
+    static const int mat[] = {0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1};
+    if(month_index < 0 || month_index > 13) return 0;
     return mat[month_index];
 }
 
@@ -296,9 +301,9 @@ int is_mat_month(int month_index)
  */
 int get_month_days(int month_index)
 {
-    /* Authentic lengths rotated so Giamonios opens the year; Quimonios = 30 */
-    static const int days[] = {29, 30, 29, 29, 30, 29, 30, 29, 30, 29, 30, 30, 30};
-    if(month_index < 0 || month_index > 12) return 30;
+    /* Authentic lengths rotated so Giamonios opens the year; intercalary months = 30 */
+    static const int days[] = {29, 30, 29, 29, 30, 29, 30, 29, 30, 29, 30, 30, 30, 30};
+    if(month_index < 0 || month_index > 13) return 30;
     return days[month_index];
 }
 

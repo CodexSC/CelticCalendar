@@ -64,6 +64,29 @@ int main(void)
     check(bad_samhain == 0, "Samhain falls in Samonios every year");
     check(bad_year == 0,    "every year is 354 or 384 days (12 or 13 lunations)");
 
+    /* 3b. Beltane (Sun at 45°) falls in Giamonios; months run in order, with the
+     *     extra month before Giamonios (Rantaranos) or before Samonios (Quimonios) */
+    int bad_beltane = 0, bad_order = 0, mid = 0, end = 0;
+    for (int y = 1990; y < 2060; y++) {
+        long start = find_samonios_start(y), next = find_samonios_start(y + 1);
+        long bel = start + 160;
+        while (days_to_true_beltane(bel) > 0) bel++;
+        if (lunar_celtic_month_index(bel) != 0) bad_beltane++;
+
+        int expect = 6, inserted = 0;
+        for (long m = start; m < next; m = find_lunar_month_start(m + 32)) {
+            int idx = lunar_celtic_month_index(m);
+            if (idx == 13 && expect == 0 && !inserted) { inserted = 1; mid++; continue; }
+            if (idx == 12 && expect == 6 && !inserted) { inserted = 1; end++; continue; }
+            if (idx != expect) bad_order++;
+            expect = (expect + 1) % 12;
+        }
+        if (expect != 6) bad_order++;
+    }
+    check(bad_beltane == 0, "Beltane falls in Giamonios every year");
+    check(bad_order == 0,   "months run in order; extra month only before Giamonios or Samonios");
+    printf("      (extra month mid-year %d times, at year end %d times)\n", mid, end);
+
     /* 4. The eight divisions of the ecliptic land on their Celtic day (published 2026 times) */
     long mar = jd_from_ymd(2026, 3, 20), jun = jd_from_ymd(2026, 6, 21);
     long sep = jd_from_ymd(2026, 9, 23), dec = jd_from_ymd(2026, 12, 22);
