@@ -41,23 +41,30 @@
 /* static const int year_days_in_cycle[5] = {384, 354, 384, 354, 354}; */
 /* static const int cycle_year_start[5] = {0, 384, 738, 1122, 1476}; */
 
-/* Convert JD to Gregorian year (rough, good enough for selecting Samhain year) */
-static int gregorian_year_from_jd(long jd)
+/*
+ * Civil year of a Julian Day (inverse of jd_from_ymd: Julian calendar
+ * before 1582-10-15, Gregorian after; Meeus, ch. 7)
+ */
+int civil_year_from_jd(long jd)
 {
-    long z = jd + 1;
-    long alpha = (long)((z - 1867216.25) / 36524.25);
-    long a = z + 1 + alpha - alpha/4;
+    long z = jd;                     /* integer jd is noon: INT(JD + 0.5) = jd */
+    long a = z;
+    if (z >= 2299161) {
+        long alpha = (long)((z - 1867216.25) / 36524.25);
+        a = z + 1 + alpha - alpha / 4;
+    }
     long b = a + 1524;
     long c = (long)((b - 122.1) / 365.25);
-    int greg_month = (int)(((b - (long)(365.25 * c)) / 30.6001) < 14 ? ((b - (long)(365.25 * c)) / 30.6001) - 1 : ((b - (long)(365.25 * c)) / 30.6001) - 13);
-    int greg_year = (greg_month > 2) ? (int)(c - 4716) : (int)(c - 4715);
-    return greg_year;
+    long d = (long)(365.25 * c);
+    long e = (long)((b - d) / 30.6001);
+    int month = (e < 14) ? (int)(e - 1) : (int)(e - 13);
+    return (month > 2) ? (int)(c - 4716) : (int)(c - 4715);
 }
 
 /* Get the solilunar year boundaries around a JD: the Samonios starts before and after it */
 static void samhain_bounds(long jd, long *prev_sam, long *next_sam, int *prev_sam_year)
 {
-    int gy = gregorian_year_from_jd(jd);
+    int gy = civil_year_from_jd(jd);
     long this_sam = find_samonios_start(gy);
     if (jd < this_sam) {
         *prev_sam_year = gy - 1;
@@ -70,11 +77,19 @@ static void samhain_bounds(long jd, long *prev_sam, long *next_sam, int *prev_sa
     }
 }
 
+/*
+ * Julian Day (at noon) of a civil date: Gregorian from 1582-10-15, Julian
+ * before it, the astronomical convention (Meeus, ch. 7)
+ */
 long jd_from_ymd(int Y, int M, int D)
 {
+    int gregorian = (Y > 1582) || (Y == 1582 && (M > 10 || (M == 10 && D >= 15)));
     if (M <= 2) { Y--; M += 12; }
-    int A = Y / 100;
-    int B = 2 - A + A / 4;
+    int B = 0;
+    if (gregorian) {
+        int A = Y / 100;
+        B = 2 - A + A / 4;
+    }
     return (long)(365.25 * (Y + 4716)) +
            (long)(30.6001 * (M + 1)) +
            D + B - 1524;

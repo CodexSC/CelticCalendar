@@ -1,7 +1,8 @@
 #ifndef CALENDAR_H
 #define CALENDAR_H
 
-long jd_from_ymd(int Y, int M, int D);
+long jd_from_ymd(int Y, int M, int D);   /* Julian calendar before 1582-10-15 */
+int civil_year_from_jd(long jd);
 long jd_today(void);
 
 int celtic_year_from_jd(long jd);

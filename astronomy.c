@@ -21,6 +21,81 @@
  * ============================================================
  */
 
+/*
+ * ΔT = TT - UT in seconds: the Earth's rotation runs irregularly behind
+ * atomic time (Espenak & Meeus 2006 polynomials). Their 2005-2050 forecast
+ * ran high, so that span follows the measured values (~64.7 s in 2005 to
+ * ~69.2 s since 2020). Uncertain by hours in deep antiquity.
+ */
+static double delta_t_seconds(double y)
+{
+    double u, t;
+    if (y < -500) {
+        u = (y - 1820) / 100;
+        return -20 + 32 * u * u;
+    }
+    if (y < 500) {
+        u = y / 100;
+        return 10583.6 - 1014.41 * u + 33.78311 * u * u - 5.952053 * u * u * u
+             - 0.1798452 * pow(u, 4) + 0.022174192 * pow(u, 5) + 0.0090316521 * pow(u, 6);
+    }
+    if (y < 1600) {
+        u = (y - 1000) / 100;
+        return 1574.2 - 556.01 * u + 71.23472 * u * u + 0.319781 * u * u * u
+             - 0.8503463 * pow(u, 4) - 0.005050998 * pow(u, 5) + 0.0083572073 * pow(u, 6);
+    }
+    if (y < 1700) {
+        t = y - 1600;
+        return 120 - 0.9808 * t - 0.01532 * t * t + t * t * t / 7129;
+    }
+    if (y < 1800) {
+        t = y - 1700;
+        return 8.83 + 0.1603 * t - 0.0059285 * t * t + 0.00013336 * t * t * t - pow(t, 4) / 1174000;
+    }
+    if (y < 1860) {
+        t = y - 1800;
+        return 13.72 - 0.332447 * t + 0.0068612 * t * t + 0.0041116 * t * t * t - 0.00037436 * pow(t, 4)
+             + 0.0000121272 * pow(t, 5) - 0.0000001699 * pow(t, 6) + 0.000000000875 * pow(t, 7);
+    }
+    if (y < 1900) {
+        t = y - 1860;
+        return 7.62 + 0.5737 * t - 0.251754 * t * t + 0.01680668 * t * t * t
+             - 0.0004473624 * pow(t, 4) + pow(t, 5) / 233174;
+    }
+    if (y < 1920) {
+        t = y - 1900;
+        return -2.79 + 1.494119 * t - 0.0598939 * t * t + 0.0061966 * t * t * t - 0.000197 * pow(t, 4);
+    }
+    if (y < 1941) {
+        t = y - 1920;
+        return 21.20 + 0.84493 * t - 0.076100 * t * t + 0.0020936 * t * t * t;
+    }
+    if (y < 1961) {
+        t = y - 1950;
+        return 29.07 + 0.407 * t - t * t / 233 + t * t * t / 2547;
+    }
+    if (y < 1986) {
+        t = y - 1975;
+        return 45.45 + 1.067 * t - t * t / 260 - t * t * t / 718;
+    }
+    if (y < 2005) {
+        t = y - 2000;
+        return 63.86 + 0.3345 * t - 0.060374 * t * t + 0.0017275 * t * t * t
+             + 0.000651814 * pow(t, 4) + 0.00002373599 * pow(t, 5);
+    }
+    if (y < 2020) return 64.69 + 0.30 * (y - 2005);     /* measured */
+    if (y < 2050) return 69.2;                           /* measured since 2020 */
+    u = (y - 1820) / 100;
+    if (y < 2150) return -20 + 32 * u * u - 0.5628 * (2150 - y);
+    return -20 + 32 * u * u;
+}
+
+/* Decimal year of a Julian Day, for ΔT */
+static double decimal_year(double jd)
+{
+    return 2000.0 + (jd - 2451545.0) / 365.25;
+}
+
 /* Mean new moon of 2000-01-06 (lunation k = 0) and mean synodic month */
 #define NEW_MOON_EPOCH 2451550.09766
 #define SYNODIC_MEAN   29.530588861
@@ -85,7 +160,8 @@ static double true_phase_jd(long lunation, int quarter)
         c += (quarter == 1) ? W : -W;
     }
 
-    return jde + c - 69.0 / 86400.0;  /* TT -> UT (ΔT ≈ 69 s in the 2020s) */
+    jde += c;
+    return jde - delta_t_seconds(decimal_year(jde)) / 86400.0;  /* TT -> UT */
 }
 
 /*
@@ -137,6 +213,7 @@ int moon_phase(long jd)
  */
 static double sun_apparent_longitude(double jd)
 {
+    jd += delta_t_seconds(decimal_year(jd)) / 86400.0;        /* UT -> TT */
     double T  = (jd - 2451545.0) / 36525.0;                   /* centuries since J2000 */
     double L0 = 280.46646 + 36000.76983 * T + 0.0003032 * T * T; /* mean longitude */
     double M  = (357.52911 + 35999.05029 * T - 0.0001537 * T * T) * DEG; /* mean anomaly */
@@ -301,20 +378,8 @@ int lunar_celtic_month_index(long jd)
      * Samonios can start as early as October, so compare against this
      * year's Samonios start rather than the Gregorian month. */
 
-    /* Get approximate Gregorian date from JD */
-    long z = jd + 1;
-    long alpha = (long)((z - 1867216.25) / 36524.25);
-    long a = z + 1 + alpha - alpha/4;
-    long b = a + 1524;
-    long c = (long)((b - 122.1) / 365.25);
-    long dd = (long)(365.25 * c);
-    long e = (long)((b - dd) / 30.6001);
-    int greg_month = (e < 14) ? e - 1 : e - 13;
-    int greg_year = (greg_month > 2) ? c - 4716 : c - 4715;
-
-
     /* Find Samonios start for this Celtic year */
-    int samhain_year = greg_year;
+    int samhain_year = civil_year_from_jd(jd);
     long jd_samonios = find_samonios_start(samhain_year);
 
     /* If we're before this year's Samonios, use previous year */
@@ -736,16 +801,7 @@ int is_solilunar_festival(long jd)
  */
 int days_to_solilunar_samhain(long jd)
 {
-    /* Get current Gregorian year */
-    long z = jd + 1;
-    long alpha = (long)((z - 1867216.25) / 36524.25);
-    long a = z + 1 + alpha - alpha/4;
-    long b = a + 1524;
-    long c = (long)((b - 122.1) / 365.25);
-    long dd = (long)(365.25 * c);
-    long e = (long)((b - dd) / 30.6001);
-    int greg_month = (e < 14) ? e - 1 : e - 13;
-    int greg_year = (greg_month > 2) ? c - 4716 : c - 4715;
+    int greg_year = civil_year_from_jd(jd);
 
     /* Find solilunar Samhain for this year */
     long jd_samhain = find_solilunar_samhain(greg_year);

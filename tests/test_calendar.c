@@ -95,6 +95,15 @@ int main(void)
     check(days_to_mabon(sep) == 0,  "September equinox 2026-09-23 (00:05 UTC)");
     check(days_to_yule(dec) == 0,   "December solstice 2026-12-21 20:50 UTC, after sunset -> Dec 22");
 
+    /* 5. Deep past: Julian dates before 1582 and ΔT. A solar eclipse can only
+     *    fall on a new moon (astronomical years: -584 = 585 BCE) */
+    check(jd_from_ymd(1582, 10, 15) - jd_from_ymd(1582, 10, 4) == 1, "Julian 1582-10-04 is followed by Gregorian 1582-10-15");
+    check(jd_from_ymd(333, 1, 27) == 1842713, "Julian date 333-01-27 = JD 1842713 (Meeus)");
+    check(civil_year_from_jd(jd_from_ymd(2025, 12, 31)) == 2025, "Dec 31 belongs to its own year");
+    check(moon_phase(jd_from_ymd(-762, 6, 15)) == 0, "new moon at the Bur-Sagale eclipse, 763 BCE June 15");
+    check(moon_phase(jd_from_ymd(-584, 5, 28)) == 0, "new moon at Thales' eclipse, 585 BCE May 28");
+    check(moon_phase(jd_from_ymd(-430, 8, 3)) == 0,  "new moon at Thucydides' eclipse, 431 BCE Aug 3");
+
     printf("\n%d months checked, %s\n", months, failures ? "FAILURES" : "all ok");
     return failures != 0;
 }
