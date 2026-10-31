@@ -247,6 +247,9 @@ static void print_coligny_tablet(int month_index, int today_day, int mat, long j
     if (is_tiocobrixtio_day(month_index, today_day)) {
         printf("║  [TIOCOBRIXTIO - Exceptional Notation]           ║\n");
     }
+    if (is_trinvx_samoni_day(month_index, today_day)) {
+        printf("║  [TRINVX SAMO SINDIV - Three Nights of Samonios] ║\n");
+    }
 
     printf("╚══════════════════════════════════════════════════╝\n");
 
@@ -622,13 +625,27 @@ void print_celtic_month_lunar(int month_index, long jd_start, long jd_celtic, lo
         }
     }
     SolarEvent solar_events[8];
+    /* The tablet's own festival comes first; the Sun's 225° is its reference */
+    int has_trinvx = 0;
+    for (int day = 1; day <= month_days; day++) {
+        if (is_trinvx_samoni_day(month_index, day)) {
+            format_relative_day(day, today_day, when, sizeof(when));
+            snprintf(line, sizeof(line), "  TRINVX SAMONI (Samhain)    %s Day %2d%s",
+                     get_celtic_month_name(month_index), day, when);
+            info_line(line);
+            has_festival = has_trinvx = 1;
+        }
+    }
     int se_count = collect_solar_events(jd_start, month_days, solar_events, 8);
     for (int i = 0; i < se_count; i++) {
         int celtic_day = solar_events[i].offset + 1;
         int solilunar = (strstr(solar_events[i].name, "Imbolc") != NULL) &&
                         is_solilunar_alignment(jd_start, solar_events[i].offset);
         format_relative_day(celtic_day, today_day, when, sizeof(when));
-        if (solilunar) {
+        if (has_trinvx && strstr(solar_events[i].name, "Samhain") != NULL) {
+            snprintf(line, sizeof(line), "    mid-season point: Sun at 225° on Day %2d%s",
+                     celtic_day, when);
+        } else if (solilunar) {
             snprintf(line, sizeof(line), "  IVOS: %-20s %s Day %2d%s [solilunar]",
                      solar_events[i].name, get_celtic_month_name(month_index), celtic_day, when);
         } else {

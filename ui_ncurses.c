@@ -167,7 +167,8 @@ static void render_month_view(WINDOW *win, long jd_actual)
      * (day 30) of the prior month. */
     long prev_start = find_lunar_month_start(jd_month_start - 1);
     int prev_len = lunar_month_length(prev_start);
-    if (month_days == 30 && prev_len == 29 && celtic_view_jd == jd_month_start) {
+    /* New Year's day (Samonios day 1) always opens the new year */
+    if (month_days == 30 && prev_len == 29 && celtic_view_jd == jd_month_start && month_idx != 6) {
         jd_month_start = prev_start;
         month_days = prev_len;
         month_idx = lunar_celtic_month_index(prev_start);

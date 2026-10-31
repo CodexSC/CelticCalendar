@@ -31,6 +31,7 @@ int get_multi_festival(int month, int day);
 int get_festival_day_number(int month, int day);
 int is_sindiv_ivos_day(int month, int day);
 int is_tiocobrixtio_day(int month, int day);
+int is_trinvx_samoni_day(int month, int day);
 const char *get_exceptional_notation(int month, int day);
 
 #endif

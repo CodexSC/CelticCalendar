@@ -89,6 +89,14 @@ static const NotationDay tiocobrixtio_days[] = {
     {5, 15}  /* CAN 15 */
 };
 
+/*
+ * TRINVX SAMO SINDIV ("the three nights of Samonios, today"), written on
+ * the tablet at SAMON xvii: the Samonios festival (Samhain)
+ */
+static const NotationDay trinvx_samoni_days[] = {
+    {6, 17}  /* SAM 17 */
+};
+
 static int day_in_table(int month, int day, const NotationDay *table, int count)
 {
     for (int i = 0; i < count; i++) {
@@ -146,8 +154,17 @@ int is_tiocobrixtio_day(int month, int day)
                         (int)(sizeof(tiocobrixtio_days) / sizeof(tiocobrixtio_days[0])));
 }
 
+int is_trinvx_samoni_day(int month, int day)
+{
+    return day_in_table(month, day, trinvx_samoni_days,
+                        (int)(sizeof(trinvx_samoni_days) / sizeof(trinvx_samoni_days[0])));
+}
+
 const char *get_exceptional_notation(int month, int day)
 {
+    if (is_trinvx_samoni_day(month, day)) {
+        return "TRINVX SAMO";
+    }
     if (is_tiocobrixtio_day(month, day)) {
         return "TIOCOBRIXTIO";
     }
